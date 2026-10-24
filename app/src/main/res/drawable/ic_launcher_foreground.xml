@@ -1,0 +1,30 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group
+        android:translateX="0"
+        android:translateY="0">
+        <!-- Circular clock/calendar ring -->
+        <path
+            android:fillColor="#00000000"
+            android:strokeColor="#7C5CFC"
+            android:strokeWidth="5"
+            android:pathData="M 54,32 A 22,22 0 1,0 76,54" />
+        
+        <!-- Calendar top loops / pins -->
+        <path
+            android:fillColor="#00D2D3"
+            android:pathData="M 44,28 h 4 v 6 h -4 z M 60,28 h 4 v 6 h -4 z" />
+            
+        <!-- Prominent Sync Checkmark -->
+        <path
+            android:fillColor="#00000000"
+            android:strokeColor="#00D2D3"
+            android:strokeWidth="6"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round"
+            android:pathData="M 42,54 L 51,63 L 73,41" />
+    </group>
+</vector>

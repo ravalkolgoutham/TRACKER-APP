@@ -1,0 +1,55 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="160dp"
+    android:viewportWidth="200"
+    android:viewportHeight="160">
+
+    <!-- Atmospheric concentric glowing rings -->
+    <path
+        android:fillColor="#151A27"
+        android:pathData="M 100,80 m -70,0 a 70,70 0 1,0 140,0 a 70,70 0 1,0 -140,0" />
+
+    <path
+        android:fillColor="#1D2336"
+        android:pathData="M 100,80 m -52,0 a 52,52 0 1,0 104,0 a 52,52 0 1,0 -104,0" />
+
+    <!-- Outer Hourglass glass body -->
+    <path
+        android:fillColor="#262D42"
+        android:strokeColor="#7C5CFC"
+        android:strokeWidth="2.5"
+        android:pathData="M 72,40 h 56 c 4,0 6,2 6,6 v 6 c 0,16 -12,28 -28,28 c -16,0 -28,-12 -28,-28 v -6 c 0,-4 2,-6 6,-6 Z" />
+
+    <path
+        android:fillColor="#262D42"
+        android:strokeColor="#7C5CFC"
+        android:strokeWidth="2.5"
+        android:pathData="M 78,80 c 16,0 28,12 28,28 v 6 c 0,4 -2,6 -6,6 h -56 c -4,0 -6,-2 -6,-6 v -6 c 0,-16 12,-28 28,-28 Z" />
+
+    <!-- Glowing sands of focus time -->
+    <path
+        android:fillColor="#00D2D3"
+        android:pathData="M 88,104 h 24 c 0,6 -4,10 -12,10 c -8,0 -12,-4 -12,-10 Z" />
+    <path
+        android:fillColor="#7C5CFC"
+        android:pathData="M 82,48 h 36 c -2,8 -10,14 -18,14 c -8,0 -16,-6 -18,-14 Z" />
+
+    <!-- Focus beam stream -->
+    <path
+        android:fillColor="#00D2D3"
+        android:pathData="M 99,62 h 2 v 42 h -2 Z" />
+
+    <!-- Floating Zen Particles -->
+    <path
+        android:fillColor="#00D2D3"
+        android:pathData="M 50,60 m -3,0 a 3,3 0 1,0 6,0 a 3,3 0 1,0 -6,0" />
+    <path
+        android:fillColor="#7C5CFC"
+        android:pathData="M 152,65 m -4,0 a 4,4 0 1,0 8,0 a 4,4 0 1,0 -8,0" />
+    <path
+        android:fillColor="#FFD200"
+        android:pathData="M 145,108 m -2.5,0 a 2.5,2.5 0 1,0 5,0 a 2.5,2.5 0 1,0 -5,0" />
+    <path
+        android:fillColor="#00E676"
+        android:pathData="M 55,105 m -3,0 a 3,3 0 1,0 6,0 a 3,3 0 1,0 -6,0" />
+</vector>

@@ -1,0 +1,49 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="150dp"
+    android:viewportWidth="200"
+    android:viewportHeight="150">
+
+    <!-- Atmospheric halo -->
+    <path
+        android:fillColor="#151A27"
+        android:pathData="M 100,75 m -60,0 a 60,60 0 1,0 120,0 a 60,60 0 1,0 -120,0" />
+
+    <!-- Google Cloud outline -->
+    <path
+        android:fillColor="#1E2437"
+        android:strokeColor="#00D2D3"
+        android:strokeWidth="2.5"
+        android:pathData="M 70,80 a 16,16 0 0,1 28,-10 a 24,24 0 0,1 42,6 a 18,18 0 0,1 18,18 a 18,18 0 0,1 -18,18 h -70 a 16,16 0 0,1 0,-32 Z" />
+
+    <!-- Samsung Phone on right -->
+    <path
+        android:fillColor="#242B3F"
+        android:strokeColor="#7C5CFC"
+        android:strokeWidth="2"
+        android:pathData="M 132,60 h 30 c 4,0 7,3 7,7 v 50 c 0,4 -3,7 -7,7 h -30 c -4,0 -7,-3 -7,-7 v -50 c 0,-4 3,-7 7,-7 Z" />
+    <path
+        android:fillColor="#00E676"
+        android:pathData="M 147,118 m -2,0 a 2,2 0 1,0 4,0 a 2,2 0 1,0 -4,0" />
+    <path
+        android:fillColor="#7C5CFC"
+        android:pathData="M 138,72 h 18 v 2 h -18 Z M 138,78 h 14 v 2 h -14 Z M 138,84 h 16 v 2 h -16 Z" />
+
+    <!-- Sync connection beams & pulses -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#00E676"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:pathData="M 85,82 L 105,82 M 95,78 L 105,82 L 95,86" />
+
+    <!-- Safe lock badge -->
+    <path
+        android:fillColor="#7C5CFC"
+        android:pathData="M 50,75 h 16 c 2,0 4,2 4,4 v 14 c 0,2 -2,4 -4,4 h -16 c -2,0 -4,-2 -4,-4 v -14 c 0,-2 2,-4 4,-4 Z" />
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#F1F3F8"
+        android:strokeWidth="2"
+        android:pathData="M 54,75 v -5 a 4,4 0 0,1 8,0 v 5" />
+</vector>
