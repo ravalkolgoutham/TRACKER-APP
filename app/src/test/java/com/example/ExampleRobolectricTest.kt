@@ -160,4 +160,25 @@ class ExampleRobolectricTest {
         assertNotNull(retrievedReward)
         assertEquals("Coffee Treat", retrievedReward?.title)
     }
+
+    @Test
+    fun `test blast event data model and types`() {
+        val streakBlast = com.example.model.BlastEvent(
+            title = "DAILY STREAK GOAL!",
+            subtitle = "7 consecutive days achieved! Streak extended!",
+            badgeText = "7 Days",
+            type = com.example.model.BlastType.STREAK_GOAL
+        )
+        assertEquals("DAILY STREAK GOAL!", streakBlast.title)
+        assertEquals(com.example.model.BlastType.STREAK_GOAL, streakBlast.type)
+        assertEquals("7 Days", streakBlast.badgeText)
+
+        val levelBlast = com.example.model.BlastEvent(
+            title = "LEVEL UP!",
+            subtitle = "You reached Level 3!",
+            badgeText = "Level 3",
+            type = com.example.model.BlastType.LEVEL_UP
+        )
+        assertEquals(com.example.model.BlastType.LEVEL_UP, levelBlast.type)
+    }
 }

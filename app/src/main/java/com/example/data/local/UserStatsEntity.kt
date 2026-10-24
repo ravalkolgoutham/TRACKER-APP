@@ -11,6 +11,7 @@ data class UserStatsEntity(
     val availablePoints: Int,
     val currentLevel: Int,
     val currentStreakDays: Int,
+    val bestStreakDays: Int = 1,
     val lastCompletedDate: Long,
     val tasksCompletedCount: Int
 ) {
@@ -20,6 +21,7 @@ data class UserStatsEntity(
         availablePoints = availablePoints,
         currentLevel = currentLevel,
         currentStreakDays = currentStreakDays,
+        bestStreakDays = bestStreakDays,
         lastCompletedDate = lastCompletedDate,
         tasksCompletedCount = tasksCompletedCount
     )
@@ -31,6 +33,7 @@ data class UserStatsEntity(
             availablePoints = stats.availablePoints,
             currentLevel = stats.currentLevel,
             currentStreakDays = stats.currentStreakDays,
+            bestStreakDays = stats.bestStreakDays,
             lastCompletedDate = stats.lastCompletedDate,
             tasksCompletedCount = stats.tasksCompletedCount
         )

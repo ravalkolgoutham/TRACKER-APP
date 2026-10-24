@@ -103,7 +103,8 @@ fun TasksScreen(
     ) -> Unit,
     userStats: com.example.model.UserRewardStats,
     onNavigateToRewards: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onTriggerStreakBlast: (() -> Unit)? = null
 ) {
     var showAddTaskDialog by remember { mutableStateOf(false) }
     var taskToSnooze by remember { mutableStateOf<TaskItem?>(null) }
@@ -122,6 +123,7 @@ fun TasksScreen(
     Scaffold(
         modifier = modifier.fillMaxSize(),
         containerColor = DarkBackground,
+        contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0.dp),
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { showAddTaskDialog = true },
@@ -146,10 +148,10 @@ fun TasksScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // One UI Signature Top Header
+            // Signature Top Header
             OneUiHeader(
                 title = "Today's Schedule",
-                subtitle = "${pendingTasks.size} active tasks • Reminders 15m prior • Room Offline Sync",
+                subtitle = "${pendingTasks.size} active tasks • Real-time Calendar Sync",
                 isSyncing = isSyncing,
                 isGoogleConnected = isGoogleConnected,
                 onSyncClick = onSyncClick
@@ -234,7 +236,8 @@ fun TasksScreen(
                 item {
                     UserProgressCard(
                         userStats = userStats,
-                        onNavigateToRewards = onNavigateToRewards
+                        onNavigateToRewards = onNavigateToRewards,
+                        onTriggerStreakBlast = onTriggerStreakBlast
                     )
                 }
 

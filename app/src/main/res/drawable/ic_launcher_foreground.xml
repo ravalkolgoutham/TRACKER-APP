@@ -6,22 +6,22 @@
     <group
         android:translateX="0"
         android:translateY="0">
-        <!-- Circular clock/calendar ring -->
+        <!-- Circular clock/calendar ring in silver -->
         <path
             android:fillColor="#00000000"
-            android:strokeColor="#7C5CFC"
+            android:strokeColor="#888888"
             android:strokeWidth="5"
             android:pathData="M 54,32 A 22,22 0 1,0 76,54" />
         
-        <!-- Calendar top loops / pins -->
+        <!-- Calendar top loops / pins in white -->
         <path
-            android:fillColor="#00D2D3"
+            android:fillColor="#FFFFFF"
             android:pathData="M 44,28 h 4 v 6 h -4 z M 60,28 h 4 v 6 h -4 z" />
             
-        <!-- Prominent Sync Checkmark -->
+        <!-- Prominent Sync Checkmark in pure white -->
         <path
             android:fillColor="#00000000"
-            android:strokeColor="#00D2D3"
+            android:strokeColor="#FFFFFF"
             android:strokeWidth="6"
             android:strokeLineCap="round"
             android:strokeLineJoin="round"

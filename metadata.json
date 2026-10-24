@@ -1,6 +1,6 @@
 {
   "name": "SyncTask",
-  "description": "Smart task and event manager with offline Room sync, Google Calendar integration, focus timer, and Samsung One UI optimization.",
+  "description": "Smart task and event manager with offline Room sync, Google Calendar integration, focus timer, streaks, and milestone rewards.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

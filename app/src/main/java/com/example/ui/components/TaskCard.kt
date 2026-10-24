@@ -98,10 +98,10 @@ fun TaskCard(
     )
 
     val priorityColor = when (task.priority) {
-        Priority.URGENT -> OneUiError
-        Priority.HIGH -> OneUiWarning
-        Priority.MEDIUM -> OneUiPrimary
-        Priority.LOW -> OneUiSecondary
+        Priority.URGENT -> Color(0xFFFFFFFF)
+        Priority.HIGH -> Color(0xFFD0D0D0)
+        Priority.MEDIUM -> Color(0xFF888888)
+        Priority.LOW -> Color(0xFF444444)
     }
 
     SwipeToDismissBox(
@@ -113,8 +113,8 @@ fun TaskCard(
             val direction = dismissState.dismissDirection
             val color by animateColorAsState(
                 targetValue = when (dismissState.targetValue) {
-                    SwipeToDismissBoxValue.StartToEnd -> OneUiSuccess.copy(alpha = 0.9f)
-                    SwipeToDismissBoxValue.EndToStart -> OneUiWarning.copy(alpha = 0.9f)
+                    SwipeToDismissBoxValue.StartToEnd -> Color(0xFF262626)
+                    SwipeToDismissBoxValue.EndToStart -> Color(0xFF1E1E1E)
                     else -> Color.Transparent
                 },
                 label = "swipe_color"
@@ -125,6 +125,7 @@ fun TaskCard(
                     .fillMaxSize()
                     .clip(RoundedCornerShape(22.dp))
                     .background(color)
+                    .border(1.dp, Color(0xFF333333), RoundedCornerShape(22.dp))
                     .padding(horizontal = 26.dp),
                 contentAlignment = if (direction == SwipeToDismissBoxValue.StartToEnd) Alignment.CenterStart else Alignment.CenterEnd
             ) {
@@ -215,7 +216,7 @@ fun TaskCard(
                                 Icon(
                                     imageVector = Icons.Default.CheckCircle,
                                     contentDescription = "Task completed",
-                                    tint = OneUiSuccess,
+                                    tint = Color.White,
                                     modifier = Modifier.size(26.dp)
                                 )
                             } else {

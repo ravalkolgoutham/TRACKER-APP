@@ -59,6 +59,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.R
+import com.example.model.BlastType
 import com.example.model.GoalItem
 import com.example.model.RewardItem
 import com.example.model.UserRewardStats
@@ -92,7 +93,8 @@ fun GoalsRewardsScreen(
     onCreateGoal: (title: String, description: String, targetCount: Int, category: String, rewardPoints: Int) -> Unit,
     onCreateCustomReward: (title: String, description: String, costPoints: Int, iconCategory: String) -> Unit,
     onDeleteGoal: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onTriggerCelebrationBlast: ((BlastType) -> Unit)? = null
 ) {
     var showCreateGoalDialog by remember { mutableStateOf(false) }
     var showCreateRewardDialog by remember { mutableStateOf(false) }
@@ -131,8 +133,8 @@ fun GoalsRewardsScreen(
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(18.dp))
                             .testTag("celebration_banner"),
-                        color = OneUiSuccess.copy(alpha = 0.2f),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, OneUiSuccess)
+                        color = Color(0xFF1E1E1E),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, Color.White)
                     ) {
                         Row(
                             modifier = Modifier
@@ -148,7 +150,7 @@ fun GoalsRewardsScreen(
                                 Icon(
                                     imageVector = Icons.Default.Stars,
                                     contentDescription = null,
-                                    tint = OneUiSuccess,
+                                    tint = Color.White,
                                     modifier = Modifier.size(24.dp)
                                 )
                                 Spacer(modifier = Modifier.width(10.dp))
@@ -178,8 +180,119 @@ fun GoalsRewardsScreen(
             // 1. User Progress Card with XP bar and level-up indicators
             UserProgressCard(
                 userStats = userStats,
-                onNavigateToRewards = {}
+                onNavigateToRewards = {},
+                onTriggerStreakBlast = { onTriggerCelebrationBlast?.invoke(BlastType.STREAK_GOAL) }
             )
+
+            // 2. Interactive Milestone & Streak Particle Blast Section
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(22.dp))
+                    .border(1.dp, DarkBorder, RoundedCornerShape(22.dp))
+                    .testTag("celebration_blast_panel"),
+                color = DarkSurface,
+                shape = RoundedCornerShape(22.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(18.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(0xFF222222))
+                                    .border(1.dp, Color.White, CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Stars,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Column {
+                                Text(
+                                    text = "Celebratory Blast Animation",
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextPrimary
+                                )
+                                Text(
+                                    text = "Explosive particle animation upon milestones & streaks",
+                                    fontSize = 12.sp,
+                                    color = TextSecondary
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Button(
+                            onClick = { onTriggerCelebrationBlast?.invoke(BlastType.STREAK_GOAL) },
+                            modifier = Modifier
+                                .weight(1f)
+                                .testTag("btn_trigger_streak_blast"),
+                            shape = RoundedCornerShape(14.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF222222),
+                                contentColor = Color.White
+                            ),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF555555))
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Default.LocalFireDepartment,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("Streak Blast", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
+
+                        Button(
+                            onClick = { onTriggerCelebrationBlast?.invoke(BlastType.LEVEL_UP) },
+                            modifier = Modifier
+                                .weight(1f)
+                                .testTag("btn_trigger_level_blast"),
+                            shape = RoundedCornerShape(14.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF191919),
+                                contentColor = Color.White
+                            ),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, Color.White)
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Default.EmojiEvents,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("Level Blast", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+                }
+            }
 
             // 2. Active Goals Section
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -545,8 +658,10 @@ private fun RewardCard(
                     enabled = canAfford,
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = OneUiWarning,
-                        contentColor = Color.Black
+                        containerColor = Color.White,
+                        contentColor = Color.Black,
+                        disabledContainerColor = Color(0xFF1E1E1E),
+                        disabledContentColor = TextTertiary
                     ),
                     modifier = Modifier.testTag("redeem_button_${reward.id}")
                 ) {

@@ -6,68 +6,68 @@
 
     <!-- Atmospheric radial glow -->
     <path
-        android:fillColor="#1F1B38"
+        android:fillColor="#141414"
         android:pathData="M 100,75 m -60,0 a 60,60 0 1,0 120,0 a 60,60 0 1,0 -120,0" />
 
     <!-- Trophy Cup Base & Pedestal -->
     <path
-        android:fillColor="#1E2335"
-        android:strokeColor="#7C5CFC"
-        android:strokeWidth="2"
+        android:fillColor="#1C1C1C"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.5"
         android:pathData="M 75,122 h 50 c 3,0 5,2 5,5 v 6 h -60 v -6 c 0,-3 2,-5 5,-5 Z" />
 
     <path
-        android:fillColor="#FFB300"
+        android:fillColor="#444444"
         android:pathData="M 82,112 h 36 v 10 h -36 Z" />
 
     <!-- Trophy Stem -->
     <path
-        android:fillColor="#FFA000"
+        android:fillColor="#666666"
         android:pathData="M 94,94 h 12 v 18 h -12 Z" />
 
-    <!-- Trophy Cup Body (Gold) -->
+    <!-- Trophy Cup Body (Platinum / Silver) -->
     <path
-        android:fillColor="#FFC107"
+        android:fillColor="#E0E0E0"
         android:pathData="M 72,40 h 56 c 0,0 2,34 -28,34 c -30,0 -28,-34 -28,-34 Z" />
 
     <path
-        android:fillColor="#FFD54F"
+        android:fillColor="#FFFFFF"
         android:pathData="M 76,44 h 20 c 0,0 2,26 -16,26 c -4,0 -4,-26 -4,-26 Z" />
 
     <!-- Trophy Handles -->
     <path
         android:fillColor="#00000000"
-        android:strokeColor="#FFB300"
+        android:strokeColor="#CCCCCC"
         android:strokeWidth="4"
         android:strokeLineCap="round"
         android:pathData="M 72,46 C 55,46 55,68 74,68" />
 
     <path
         android:fillColor="#00000000"
-        android:strokeColor="#FFB300"
+        android:strokeColor="#CCCCCC"
         android:strokeWidth="4"
         android:strokeLineCap="round"
         android:pathData="M 128,46 C 145,46 145,68 126,68" />
 
     <!-- Center Star Emblem -->
     <path
-        android:fillColor="#7C5CFC"
+        android:fillColor="#000000"
         android:pathData="M 100,56 L 102,61 L 107,61.5 L 103,65 L 104,70 L 100,67 L 96,70 L 97,65 L 93,61.5 L 98,61 Z" />
 
-    <!-- Sparkling celebratory stars and confetti -->
+    <!-- Celebratory monochrome stars and confetti -->
     <path
-        android:fillColor="#00E676"
+        android:fillColor="#FFFFFF"
         android:pathData="M 45,35 L 46.5,39 L 51,40.5 L 46.5,42 L 45,46 L 43.5,42 L 39,40.5 L 43.5,39 Z" />
 
     <path
-        android:fillColor="#00D2D3"
+        android:fillColor="#888888"
         android:pathData="M 155,30 L 156.5,34 L 161,35.5 L 156.5,37 L 155,41 L 153.5,37 L 149,35.5 L 153.5,34 Z" />
 
     <path
-        android:fillColor="#FF6B81"
+        android:fillColor="#CCCCCC"
         android:pathData="M 160,95 L 161.5,98 L 165,99.5 L 161.5,101 L 160,104 L 158.5,101 L 155,99.5 L 158.5,98 Z" />
 
     <path
-        android:fillColor="#FFD200"
+        android:fillColor="#888888"
         android:pathData="M 40,90 m -3,0 a 3,3 0 1,0 6,0 a 3,3 0 1,0 -6,0" />
 </vector>

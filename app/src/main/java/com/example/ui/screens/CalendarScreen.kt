@@ -49,6 +49,7 @@ import com.example.ui.components.TaskCard
 import com.example.ui.theme.DarkBackground
 import com.example.ui.theme.DarkBorder
 import com.example.ui.theme.DarkSurfaceElevated
+import com.example.ui.theme.DarkSurfaceVariant
 import com.example.ui.theme.OneUiPrimary
 import com.example.ui.theme.OneUiSecondary
 import com.example.ui.theme.OneUiSuccess
@@ -161,12 +162,12 @@ fun CalendarScreen(
                         .clip(RoundedCornerShape(20.dp))
                         .border(
                             1.dp,
-                            if (isSelected) OneUiPrimary else DarkBorder,
+                            if (isSelected) Color.White else DarkBorder,
                             RoundedCornerShape(20.dp)
                         )
                         .clickable { selectedDate = date }
                         .testTag("date_chip_${dayNumFormat.format(date)}"),
-                    color = if (isSelected) OneUiPrimary else DarkSurfaceElevated,
+                    color = if (isSelected) DarkSurfaceVariant else DarkSurfaceElevated,
                     shape = RoundedCornerShape(20.dp)
                 ) {
                     Column(

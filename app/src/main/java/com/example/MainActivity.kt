@@ -55,6 +55,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.ui.SyncTaskViewModel
+import com.example.ui.components.ParticleBlastOverlay
 import com.example.ui.screens.CalendarScreen
 import com.example.ui.screens.FocusScreen
 import com.example.ui.screens.GoalsRewardsScreen
@@ -92,20 +93,30 @@ class MainActivity : ComponentActivity() {
                 // Request Notification Permission on Android 13+
                 val context = LocalContext.current
                 val permissionLauncher = rememberLauncherForActivityResult(
-                    contract = ActivityResultContracts.RequestPermission()
-                ) { isGranted ->
-                    // Notification permission handled
+                    contract = ActivityResultContracts.RequestMultiplePermissions()
+                ) { permissions ->
+                    val calGranted = (permissions[Manifest.permission.READ_CALENDAR] ?: false) &&
+                            (permissions[Manifest.permission.WRITE_CALENDAR] ?: false)
+                    if (calGranted) {
+                        viewModel.triggerSync()
+                    }
                 }
 
                 LaunchedEffect(Unit) {
+                    val permissionsToRequest = mutableListOf<String>()
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        if (ContextCompat.checkSelfPermission(
-                                context,
-                                Manifest.permission.POST_NOTIFICATIONS
-                            ) != PackageManager.PERMISSION_GRANTED
-                        ) {
-                            permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                            permissionsToRequest.add(Manifest.permission.POST_NOTIFICATIONS)
                         }
+                    }
+                    if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CALENDAR) != PackageManager.PERMISSION_GRANTED) {
+                        permissionsToRequest.add(Manifest.permission.READ_CALENDAR)
+                    }
+                    if (ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_CALENDAR) != PackageManager.PERMISSION_GRANTED) {
+                        permissionsToRequest.add(Manifest.permission.WRITE_CALENDAR)
+                    }
+                    if (permissionsToRequest.isNotEmpty()) {
+                        permissionLauncher.launch(permissionsToRequest.toTypedArray())
                     }
                 }
 
@@ -150,13 +161,14 @@ fun SyncTaskAppRoot(viewModel: SyncTaskViewModel) {
     val userStats by viewModel.userStats.collectAsStateWithLifecycle()
     val rewards by viewModel.rewards.collectAsStateWithLifecycle()
     val celebrationMessage by viewModel.celebrationMessage.collectAsStateWithLifecycle()
+    val blastEvent by viewModel.blastEvent.collectAsStateWithLifecycle()
 
     // Multi-Window & Adaptive Container: Checks available width
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
         val isWideDisplay = maxWidth >= 600.dp
 
         if (isWideDisplay) {
-            // Tablet, Samsung DeX, or Wide Multi-Window: Side Navigation Rail
+            // Tablet, Desktop, or Wide Multi-Window: Side Navigation Rail
             Row(modifier = Modifier.fillMaxSize().background(DarkBackground)) {
                 NavigationRail(
                     containerColor = DarkSurface,
@@ -177,8 +189,8 @@ fun SyncTaskAppRoot(viewModel: SyncTaskViewModel) {
                             label = { Text(screen.title, fontSize = 11.sp) },
                             colors = NavigationRailItemDefaults.colors(
                                 selectedIconColor = Color.White,
-                                selectedTextColor = OneUiPrimary,
-                                indicatorColor = OneUiPrimary,
+                                selectedTextColor = Color.White,
+                                indicatorColor = OneUiPrimary.copy(alpha = 0.35f),
                                 unselectedIconColor = TextTertiary,
                                 unselectedTextColor = TextTertiary
                             ),
@@ -211,7 +223,8 @@ fun SyncTaskAppRoot(viewModel: SyncTaskViewModel) {
                                 viewModel.saveTask(null, title, desc, start, end, prio, cat, rule, reminder)
                             },
                             userStats = userStats,
-                            onNavigateToRewards = { currentScreen = AppScreen.GOALS }
+                            onNavigateToRewards = { currentScreen = AppScreen.GOALS },
+                            onTriggerStreakBlast = { viewModel.triggerTestBlast(com.example.model.BlastType.STREAK_GOAL) }
                         )
                         AppScreen.CALENDAR -> CalendarScreen(
                             tasks = allTasks,
@@ -247,7 +260,8 @@ fun SyncTaskAppRoot(viewModel: SyncTaskViewModel) {
                             onRedeemReward = viewModel::redeemReward,
                             onCreateGoal = viewModel::createGoal,
                             onCreateCustomReward = viewModel::createCustomReward,
-                            onDeleteGoal = viewModel::deleteGoal
+                            onDeleteGoal = viewModel::deleteGoal,
+                            onTriggerCelebrationBlast = viewModel::triggerTestBlast
                         )
                         AppScreen.SYNC -> SyncSettingsScreen(
                             authEmail = authEmail,
@@ -270,9 +284,7 @@ fun SyncTaskAppRoot(viewModel: SyncTaskViewModel) {
                     NavigationBar(
                         containerColor = DarkSurface,
                         contentColor = TextSecondary,
-                        modifier = Modifier
-                            .navigationBarsPadding()
-                            .testTag("bottom_navigation_bar"),
+                        modifier = Modifier.testTag("bottom_navigation_bar"),
                         tonalElevation = 8.dp
                     ) {
                         AppScreen.values().forEach { screen ->
@@ -287,11 +299,11 @@ fun SyncTaskAppRoot(viewModel: SyncTaskViewModel) {
                                         modifier = Modifier.size(22.dp)
                                     )
                                 },
-                                label = { Text(screen.title, fontSize = 11.sp) },
+                                label = { Text(screen.title, fontSize = 11.sp, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal) },
                                 colors = NavigationBarItemDefaults.colors(
                                     selectedIconColor = Color.White,
-                                    selectedTextColor = OneUiPrimary,
-                                    indicatorColor = OneUiPrimary,
+                                    selectedTextColor = Color.White,
+                                    indicatorColor = OneUiPrimary.copy(alpha = 0.35f),
                                     unselectedIconColor = TextTertiary,
                                     unselectedTextColor = TextTertiary
                                 ),
@@ -329,7 +341,8 @@ fun SyncTaskAppRoot(viewModel: SyncTaskViewModel) {
                                 viewModel.saveTask(null, title, desc, start, end, prio, cat, rule, reminder)
                             },
                             userStats = userStats,
-                            onNavigateToRewards = { currentScreen = AppScreen.GOALS }
+                            onNavigateToRewards = { currentScreen = AppScreen.GOALS },
+                            onTriggerStreakBlast = { viewModel.triggerTestBlast(com.example.model.BlastType.STREAK_GOAL) }
                         )
                         AppScreen.CALENDAR -> CalendarScreen(
                             tasks = allTasks,
@@ -365,7 +378,8 @@ fun SyncTaskAppRoot(viewModel: SyncTaskViewModel) {
                             onRedeemReward = viewModel::redeemReward,
                             onCreateGoal = viewModel::createGoal,
                             onCreateCustomReward = viewModel::createCustomReward,
-                            onDeleteGoal = viewModel::deleteGoal
+                            onDeleteGoal = viewModel::deleteGoal,
+                            onTriggerCelebrationBlast = viewModel::triggerTestBlast
                         )
                         AppScreen.SYNC -> SyncSettingsScreen(
                             authEmail = authEmail,
@@ -381,5 +395,11 @@ fun SyncTaskAppRoot(viewModel: SyncTaskViewModel) {
                 }
             }
         }
+
+        // 3. Celebratory Particle Blast Overlay
+        ParticleBlastOverlay(
+            blastEvent = blastEvent,
+            onDismiss = viewModel::clearBlast
+        )
     }
 }

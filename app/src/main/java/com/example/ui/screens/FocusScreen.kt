@@ -229,11 +229,14 @@ fun FocusScreen(
                             .width(190.dp)
                             .testTag("start_focus_timer_button"),
                         shape = RoundedCornerShape(20.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = OneUiPrimary)
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.White,
+                            contentColor = Color.Black
+                        )
                     ) {
-                        Icon(imageVector = Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(26.dp))
+                        Icon(imageVector = Icons.Default.PlayArrow, contentDescription = null, tint = Color.Black, modifier = Modifier.size(26.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(text = "Start Focus", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                        Text(text = "Start Focus", color = Color.Black, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                     }
                 }
 
@@ -245,11 +248,14 @@ fun FocusScreen(
                             .width(140.dp)
                             .testTag("pause_focus_timer_button"),
                         shape = RoundedCornerShape(20.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = OneUiWarning)
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF262626),
+                            contentColor = Color.White
+                        )
                     ) {
-                        Icon(imageVector = Icons.Default.Pause, contentDescription = null, modifier = Modifier.size(24.dp))
+                        Icon(imageVector = Icons.Default.Pause, contentDescription = null, tint = Color.White, modifier = Modifier.size(24.dp))
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text(text = "Pause", fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                        Text(text = "Pause", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
                     }
 
                     Button(
@@ -259,11 +265,14 @@ fun FocusScreen(
                             .width(130.dp)
                             .testTag("stop_focus_timer_button"),
                         shape = RoundedCornerShape(20.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = DarkSurfaceElevated)
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF161616),
+                            contentColor = Color(0xFFA0A0A0)
+                        )
                     ) {
-                        Icon(imageVector = Icons.Default.Stop, contentDescription = null, tint = OneUiError, modifier = Modifier.size(24.dp))
+                        Icon(imageVector = Icons.Default.Stop, contentDescription = null, tint = Color(0xFFA0A0A0), modifier = Modifier.size(24.dp))
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text(text = "End", color = OneUiError, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                        Text(text = "End", color = Color(0xFFA0A0A0), fontSize = 15.sp, fontWeight = FontWeight.Bold)
                     }
                 }
 
@@ -275,11 +284,14 @@ fun FocusScreen(
                             .width(140.dp)
                             .testTag("resume_focus_timer_button"),
                         shape = RoundedCornerShape(20.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = OneUiPrimary)
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.White,
+                            contentColor = Color.Black
+                        )
                     ) {
-                        Icon(imageVector = Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(24.dp))
+                        Icon(imageVector = Icons.Default.PlayArrow, contentDescription = null, tint = Color.Black, modifier = Modifier.size(24.dp))
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text(text = "Resume", fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                        Text(text = "Resume", color = Color.Black, fontSize = 15.sp, fontWeight = FontWeight.Bold)
                     }
 
                     Button(

@@ -6,33 +6,33 @@
 
     <!-- Atmospheric radial glow circle -->
     <path
-        android:fillColor="#1C2132"
+        android:fillColor="#141414"
         android:pathData="M 100,80 m -65,0 a 65,65 0 1,0 130,0 a 65,65 0 1,0 -130,0" />
 
     <!-- Clipboard base -->
     <path
-        android:fillColor="#151926"
-        android:strokeColor="#2C3246"
-        android:strokeWidth="2"
+        android:fillColor="#0D0D0D"
+        android:strokeColor="#333333"
+        android:strokeWidth="1.5"
         android:pathData="M 60,35 h 80 c 6,0 10,4 10,10 v 90 c 0,6 -4,10 -10,10 h -80 c -6,0 -10,-4 -10,-10 v -90 c 0,-6 4,-10 10,-10 Z" />
 
     <!-- Top clip holder -->
     <path
-        android:fillColor="#7C5CFC"
+        android:fillColor="#FFFFFF"
         android:pathData="M 82,26 h 36 c 3,0 5,2 5,5 v 14 h -46 v -14 c 0,-3 2,-5 5,-5 Z" />
 
     <!-- Sheet paper interior -->
     <path
-        android:fillColor="#22283A"
+        android:fillColor="#1A1A1A"
         android:pathData="M 64,48 h 72 v 82 h -72 Z" />
 
     <!-- Big luminous celebration checkmark -->
     <path
-        android:fillColor="#00E676"
+        android:fillColor="#FFFFFF"
         android:pathData="M 100,88 m -22,0 a 22,22 0 1,0 44,0 a 22,22 0 1,0 -44,0" />
     <path
         android:fillColor="#00000000"
-        android:strokeColor="#0D0F14"
+        android:strokeColor="#000000"
         android:strokeWidth="4.5"
         android:strokeLineCap="round"
         android:strokeLineJoin="round"
@@ -40,14 +40,14 @@
 
     <!-- Floating confetti stars -->
     <path
-        android:fillColor="#00D2D3"
+        android:fillColor="#CCCCCC"
         android:pathData="M 38,55 L 40,61 L 46,63 L 40,65 L 38,71 L 36,65 L 30,63 L 36,61 Z" />
 
     <path
-        android:fillColor="#7C5CFC"
+        android:fillColor="#FFFFFF"
         android:pathData="M 160,45 L 161.5,50 L 166,51.5 L 161.5,53 L 160,58 L 158.5,53 L 154,51.5 L 158.5,50 Z" />
 
     <path
-        android:fillColor="#FFB300"
+        android:fillColor="#888888"
         android:pathData="M 165,115 L 166.5,118.5 L 170,120 L 166.5,121.5 L 165,125 L 163.5,121.5 L 160,120 L 163.5,118.5 Z" />
 </vector>

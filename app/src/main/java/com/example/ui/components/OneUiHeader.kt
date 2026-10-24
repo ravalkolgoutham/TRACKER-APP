@@ -58,34 +58,12 @@ fun OneUiHeader(
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp, vertical = 22.dp)
         ) {
-            // Samsung S25 Multi-Window & Ecosystem badge row with generous spacing
+            // Status & Sync Action Row
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.End,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(OneUiPrimary.copy(alpha = 0.15f))
-                        .padding(horizontal = 12.dp, vertical = 6.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(7.dp)
-                            .clip(CircleShape)
-                            .background(OneUiSecondary)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "Samsung S25 • One UI 7",
-                        color = OneUiSecondary,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
-
                 // Cloud Sync Action / Status Badge
                 Row(
                     verticalAlignment = Alignment.CenterVertically,

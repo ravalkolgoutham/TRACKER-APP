@@ -4,74 +4,74 @@
     android:viewportWidth="320"
     android:viewportHeight="140">
 
-    <!-- Subtle background rounded glow card -->
+    <!-- Subtle background rounded obsidian card -->
     <path
-        android:fillColor="#151926"
+        android:fillColor="#0D0D0D"
         android:pathData="M 16,10 C 16,10 304,10 304,10 C 312,10 318,16 318,24 C 318,24 318,116 318,116 C 318,124 312,130 304,130 C 304,130 16,130 16,130 C 8,130 2,124 2,116 C 2,116 2,24 2,24 C 2,16 8,10 16,10 Z" />
 
-    <!-- Ambient glowing decorative circular gradients -->
+    <!-- Ambient glowing decorative circular dark gradients -->
     <path
-        android:fillColor="#241B4D"
+        android:fillColor="#1A1A1A"
         android:pathData="M 70,70 m -50,0 a 50,50 0 1,0 100,0 a 50,50 0 1,0 -100,0" />
 
     <path
-        android:fillColor="#0D353F"
+        android:fillColor="#141414"
         android:pathData="M 250,70 m -45,0 a 45,45 0 1,0 90,0 a 45,45 0 1,0 -90,0" />
 
     <!-- Center Left: Calendar Pad -->
     <!-- Calendar Body -->
     <path
-        android:fillColor="#1F2436"
-        android:strokeColor="#7C5CFC"
-        android:strokeWidth="2"
+        android:fillColor="#161616"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.5"
         android:pathData="M 40,36 h 60 c 6,0 10,4 10,10 v 62 c 0,6 -4,10 -10,10 h -60 c -6,0 -10,-4 -10,-10 v -62 c 0,-6 4,-10 10,-10 Z" />
 
     <!-- Calendar Header banner -->
     <path
-        android:fillColor="#7C5CFC"
+        android:fillColor="#262626"
         android:pathData="M 40,36 h 60 c 6,0 10,4 10,10 v 14 h -80 v -14 c 0,-6 4,-10 10,-10 Z" />
 
     <!-- Calendar Rings -->
     <path
-        android:fillColor="#00D2D3"
+        android:fillColor="#FFFFFF"
         android:pathData="M 50,30 h 4 v 12 h -4 Z M 86,30 h 4 v 12 h -4 Z" />
 
     <!-- Calendar Day Grid dots -->
     <path
-        android:fillColor="#9AA0B4"
+        android:fillColor="#555555"
         android:pathData="M 48,70 h 6 v 6 h -6 Z M 64,70 h 6 v 6 h -6 Z M 80,70 h 6 v 6 h -6 Z M 48,84 h 6 v 6 h -6 Z M 64,84 h 6 v 6 h -6 Z M 80,84 h 6 v 6 h -6 Z M 48,98 h 6 v 6 h -6 Z" />
     <path
-        android:fillColor="#00E676"
+        android:fillColor="#FFFFFF"
         android:pathData="M 64,98 h 6 v 6 h -6 Z M 80,98 h 6 v 6 h -6 Z" />
 
     <!-- Central Sync Orbit Rings & Arrows -->
     <path
         android:fillColor="#00000000"
-        android:strokeColor="#7C5CFC"
-        android:strokeWidth="2"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.5"
         android:strokeLineCap="round"
         android:pathData="M 130,55 C 145,40 175,40 190,55" />
     <path
-        android:fillColor="#7C5CFC"
+        android:fillColor="#FFFFFF"
         android:pathData="M 190,55 L 180,50 L 184,58 Z" />
 
     <path
         android:fillColor="#00000000"
-        android:strokeColor="#00D2D3"
-        android:strokeWidth="2"
+        android:strokeColor="#888888"
+        android:strokeWidth="1.5"
         android:strokeLineCap="round"
         android:pathData="M 190,85 C 175,100 145,100 130,85" />
     <path
-        android:fillColor="#00D2D3"
+        android:fillColor="#888888"
         android:pathData="M 130,85 L 140,90 L 136,82 Z" />
 
     <!-- Center Floating Checkmark Badge -->
     <path
-        android:fillColor="#00E676"
+        android:fillColor="#FFFFFF"
         android:pathData="M 160,70 m -16,0 a 16,16 0 1,0 32,0 a 16,16 0 1,0 -32,0" />
     <path
         android:fillColor="#00000000"
-        android:strokeColor="#0D0F14"
+        android:strokeColor="#000000"
         android:strokeWidth="3.5"
         android:strokeLineCap="round"
         android:strokeLineJoin="round"
@@ -80,41 +80,41 @@
     <!-- Right Side: Floating Task Cards -->
     <!-- Card 1 -->
     <path
-        android:fillColor="#242B3E"
-        android:strokeColor="#2C3246"
+        android:fillColor="#161616"
+        android:strokeColor="#333333"
         android:strokeWidth="1.5"
         android:pathData="M 215,36 h 75 c 5,0 8,3 8,8 v 20 c 0,5 -3,8 -8,8 h -75 c -5,0 -8,-3 -8,-8 v -20 c 0,-5 3,-8 8,-8 Z" />
     <path
-        android:fillColor="#00D2D3"
+        android:fillColor="#FFFFFF"
         android:pathData="M 217,54 m -4,0 a 4,4 0 1,0 8,0 a 4,4 0 1,0 -8,0" />
     <path
-        android:fillColor="#F1F3F8"
+        android:fillColor="#FFFFFF"
         android:pathData="M 228,48 h 45 v 3 h -45 Z" />
     <path
-        android:fillColor="#9AA0B4"
+        android:fillColor="#666666"
         android:pathData="M 228,56 h 30 v 2.5 h -30 Z" />
 
     <!-- Card 2 -->
     <path
-        android:fillColor="#242B3E"
-        android:strokeColor="#7C5CFC"
+        android:fillColor="#1A1A1A"
+        android:strokeColor="#FFFFFF"
         android:strokeWidth="1.5"
         android:pathData="M 215,82 h 75 c 5,0 8,3 8,8 v 20 c 0,5 -3,8 -8,8 h -75 c -5,0 -8,-3 -8,-8 v -20 c 0,-5 3,-8 8,-8 Z" />
     <path
-        android:fillColor="#00E676"
+        android:fillColor="#FFFFFF"
         android:pathData="M 217,100 m -4,0 a 4,4 0 1,0 8,0 a 4,4 0 1,0 -8,0" />
     <path
-        android:fillColor="#F1F3F8"
+        android:fillColor="#FFFFFF"
         android:pathData="M 228,94 h 38 v 3 h -38 Z" />
     <path
-        android:fillColor="#9AA0B4"
+        android:fillColor="#777777"
         android:pathData="M 228,102 h 25 v 2.5 h -25 Z" />
 
     <!-- Sparkling stars -->
     <path
-        android:fillColor="#FFD200"
+        android:fillColor="#FFFFFF"
         android:pathData="M 125,28 L 126.5,33 L 131,34.5 L 126.5,36 L 125,41 L 123.5,36 L 119,34.5 L 123.5,33 Z" />
     <path
-        android:fillColor="#00D2D3"
+        android:fillColor="#888888"
         android:pathData="M 200,118 L 201,121 L 204,122 L 201,123 L 200,126 L 199,123 L 196,122 L 199,121 Z" />
 </vector>

@@ -84,7 +84,7 @@ fun SyncSettingsScreen(
     ) {
         OneUiHeader(
             title = "Sync & Ecosystem",
-            subtitle = "Google Calendar API • Room Local Persistence • Samsung S25 One UI",
+            subtitle = "Google Calendar API • Room Local Persistence • Cloud Sync",
             isSyncing = isSyncing,
             isGoogleConnected = isGoogleConnected,
             onSyncClick = onTriggerSync
@@ -192,10 +192,10 @@ fun SyncSettingsScreen(
                                 checked = isGoogleConnected,
                                 onCheckedChange = { onToggleAccountConnection() },
                                 colors = SwitchDefaults.colors(
-                                    checkedThumbColor = Color.White,
-                                    checkedTrackColor = OneUiSuccess,
-                                    uncheckedThumbColor = TextSecondary,
-                                    uncheckedTrackColor = DarkSurface
+                                    checkedThumbColor = Color.Black,
+                                    checkedTrackColor = Color.White,
+                                    uncheckedThumbColor = TextTertiary,
+                                    uncheckedTrackColor = Color(0xFF1E1E1E)
                                 ),
                                 modifier = Modifier.testTag("google_sync_switch")
                             )
@@ -325,10 +325,10 @@ fun SyncSettingsScreen(
                 }
             }
 
-            // 3. Samsung S25 One UI & Alarm Diagnostics
+            // 3. System & Alarm Diagnostics
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
-                    text = "Samsung S25 & Hardware Architecture",
+                    text = "System & Hardware Architecture",
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
                     color = TextSecondary
@@ -346,8 +346,8 @@ fun SyncSettingsScreen(
                     ) {
                         FeatureCheckRow(
                             icon = Icons.Default.PhoneAndroid,
-                            title = "Samsung S25 One UI 7 Multitasking",
-                            subtitle = "Adaptive split-screen, responsive navigation rail, AMOLED deep dark theme"
+                            title = "Adaptive Multitasking & Split-Screen",
+                            subtitle = "Multi-window split screen, responsive navigation rail, AMOLED deep dark theme"
                         )
 
                         FeatureCheckRow(

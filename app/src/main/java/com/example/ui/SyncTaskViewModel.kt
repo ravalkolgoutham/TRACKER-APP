@@ -57,6 +57,7 @@ class SyncTaskViewModel(application: Application) : AndroidViewModel(application
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val celebrationMessage: StateFlow<String?> = repository.celebrationEvent
+    val blastEvent: StateFlow<com.example.model.BlastEvent?> = repository.blastEvent
 
     val authEmail: StateFlow<String> = authManager.userEmail
     val isAuthConnected: StateFlow<Boolean> = authManager.isConnected
@@ -231,5 +232,40 @@ class SyncTaskViewModel(application: Application) : AndroidViewModel(application
 
     fun clearCelebration() {
         repository.clearCelebration()
+    }
+
+    fun clearBlast() {
+        repository.clearBlast()
+    }
+
+    fun triggerTestBlast(type: com.example.model.BlastType = com.example.model.BlastType.STREAK_GOAL) {
+        val stats = userStats.value
+        val event = when (type) {
+            com.example.model.BlastType.STREAK_GOAL -> com.example.model.BlastEvent(
+                title = "DAILY STREAK GOAL!",
+                subtitle = "${stats.displayStreakDays}-day streak milestone accomplished!",
+                badgeText = "${stats.displayStreakDays} Days",
+                type = com.example.model.BlastType.STREAK_GOAL
+            )
+            com.example.model.BlastType.LEVEL_UP -> com.example.model.BlastEvent(
+                title = "LEVEL UP!",
+                subtitle = "Promoted to Level ${stats.currentLevel + 1}! Master rank unlocked!",
+                badgeText = "Level ${stats.currentLevel + 1}",
+                type = com.example.model.BlastType.LEVEL_UP
+            )
+            com.example.model.BlastType.GOAL_COMPLETED -> com.example.model.BlastEvent(
+                title = "GOAL ACHIEVED!",
+                subtitle = "Completed milestone target! +200 Bonus Points",
+                badgeText = "+200 Pts",
+                type = com.example.model.BlastType.GOAL_COMPLETED
+            )
+            com.example.model.BlastType.MILESTONE -> com.example.model.BlastEvent(
+                title = "MILESTONE REACHED!",
+                subtitle = "High efficiency streak unlocked! Keep it up!",
+                badgeText = "Milestone",
+                type = com.example.model.BlastType.MILESTONE
+            )
+        }
+        repository.triggerBlast(event)
     }
 }
