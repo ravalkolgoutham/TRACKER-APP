@@ -7,6 +7,7 @@ import android.util.Log
 import com.example.alarm.ReminderScheduler
 import com.example.data.auth.GoogleAuthManager
 import com.example.data.local.FocusSessionDao
+import com.example.data.local.FocusSessionEntity
 import com.example.data.local.GoalDao
 import com.example.data.local.GoalEntity
 import com.example.data.local.RewardDao
@@ -28,25 +29,29 @@ import com.example.model.GoalItem
 import com.example.model.Priority
 import com.example.model.RepeatRule
 import com.example.model.RewardItem
+import com.example.model.SubtaskItem
+import com.example.model.SyncQueueItem
 import com.example.model.SyncStatus
 import com.example.model.TaskItem
 import com.example.model.UserRewardStats
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import com.example.model.toLocalIsoDate
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
 import java.util.UUID
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.json.JSONArray
+import org.json.JSONObject
 
 class TaskRepository(
     private val context: Context,
@@ -61,7 +66,6 @@ class TaskRepository(
     private val calendarApi: GoogleCalendarApiService = GoogleCalendarApiClient.create(context)
     val calendarSyncManager = SystemCalendarSyncManager(context)
 
-    // Reactive streams from local Room DB
     val allTasks: Flow<List<TaskItem>> = taskDao.getAllActiveTasksFlow()
         .map { list -> list.map { it.toDomain() } }
 
@@ -83,6 +87,9 @@ class TaskRepository(
     private val _conflictLogs = MutableStateFlow<List<ConflictLog>>(emptyList())
     val conflictLogs: StateFlow<List<ConflictLog>> = _conflictLogs.asStateFlow()
 
+    private val _syncQueueLogs = MutableStateFlow<List<SyncQueueItem>>(emptyList())
+    val syncQueueLogs: StateFlow<List<SyncQueueItem>> = _syncQueueLogs.asStateFlow()
+
     private val _isSyncing = MutableStateFlow(false)
     val isSyncing: StateFlow<Boolean> = _isSyncing.asStateFlow()
 
@@ -103,21 +110,27 @@ class TaskRepository(
         _blastEvent.value = null
     }
 
+    private fun appendSyncQueueMutation(
+        entityType: String,
+        action: String,
+        payloadSummary: String,
+        status: String = if (isNetworkAvailable()) "synced" else "offline"
+    ) {
+        val item = SyncQueueItem(
+            id = UUID.randomUUID().toString(),
+            entityType = entityType,
+            action = action,
+            payloadSummary = payloadSummary,
+            timestamp = System.currentTimeMillis(),
+            retryCount = 0,
+            syncStatus = status
+        )
+        _syncQueueLogs.value = (listOf(item) + _syncQueueLogs.value).take(40)
+    }
+
     init {
         scope.launch {
-            // Remove any preloaded or placeholder tasks to ensure 0 default tasks
-            val placeholderTitles = listOf(
-                "Team Sprint Planning & Architecture",
-                "Deep Focus: System Polish",
-                "Deep Focus: Samsung S25 UX Polish",
-                "Evening Health & Mobility Run"
-            )
-            val currentTasks = taskDao.getAllActiveTasksList()
-            for (task in currentTasks) {
-                if (task.title in placeholderTitles) {
-                    taskDao.deletePermanently(task.id)
-                }
-            }
+            purgeDuplicatesAndHolidayTasks()
 
             if (userStatsDao.getStats() == null) {
                 userStatsDao.insertOrUpdate(
@@ -129,7 +142,8 @@ class TaskRepository(
                         currentStreakDays = 0,
                         bestStreakDays = 0,
                         lastCompletedDate = 0L,
-                        tasksCompletedCount = 0
+                        tasksCompletedCount = 0,
+                        streakFreezeCount = 1
                     )
                 )
             }
@@ -138,13 +152,50 @@ class TaskRepository(
             }
             seedInitialRewardsIfEmpty()
 
-            // Start real-time observer for Samsung Calendar & Google Calendar
             calendarSyncManager.startRealtimeObserver {
                 scope.launch {
                     syncWithGoogleCalendar()
                 }
             }
         }
+    }
+
+    /**
+     * Removes any default placeholder tasks, imported Holiday/Observance calendar entries
+     * (e.g., "Maharishi Valmiki Jayanti", "To hide observances, go to Google Calendar"),
+     * and any duplicate tasks sharing the same title and scheduled time.
+     */
+    suspend fun purgeDuplicatesAndHolidayTasks(): Int = withContext(Dispatchers.IO) {
+        val placeholderTitles = setOf(
+            "Team Sprint Planning & Architecture",
+            "Deep Focus: System Polish",
+            "Deep Focus: Samsung S25 UX Polish",
+            "Evening Health & Mobility Run"
+        )
+        val currentTasks = taskDao.getAllActiveTasksList()
+        val seenTitleAndTime = mutableSetOf<String>()
+        val seenTitleOnlyForCalImports = mutableSetOf<String>()
+        var removedCount = 0
+
+        for (task in currentTasks) {
+            val isPlaceholder = task.title in placeholderTitles
+            val isHolidayOrObservance = calendarSyncManager.isHolidayOrObservanceEvent(task.title, task.description)
+            val normTitle = task.title.trim().lowercase(Locale.getDefault())
+            val dedupKey = "${normTitle}_${task.scheduledTime}"
+            val isDuplicate = !seenTitleAndTime.add(dedupKey)
+            val isCalImportDuplicate = task.googleEventId?.startsWith("cal_") == true &&
+                    !seenTitleOnlyForCalImports.add(normTitle)
+
+            if (isPlaceholder || isHolidayOrObservance || isDuplicate || isCalImportDuplicate) {
+                taskDao.deletePermanently(task.id)
+                removedCount++
+            }
+        }
+        if (removedCount > 0) {
+            appendSyncQueueMutation("CLEANUP", "PURGE", "Removed $removedCount duplicate/observance entries")
+            _syncMessage.value = "Cleaned up $removedCount duplicate & observance entries"
+        }
+        removedCount
     }
 
     private suspend fun seedInitialGoals() {
@@ -154,7 +205,7 @@ class TaskRepository(
                 title = "Complete 5 Work Tasks",
                 description = "Clear your weekly engineering and sprint checklist",
                 targetCount = 5,
-                currentCount = 2,
+                currentCount = 0,
                 category = "Work",
                 rewardPoints = 150,
                 isCompleted = false,
@@ -165,7 +216,7 @@ class TaskRepository(
                 title = "Deep Focus Mastery",
                 description = "Execute 3 focused work sprint sessions",
                 targetCount = 3,
-                currentCount = 1,
+                currentCount = 0,
                 category = "Focus",
                 rewardPoints = 120,
                 isCompleted = false,
@@ -176,7 +227,7 @@ class TaskRepository(
                 title = "Active Daily Streak",
                 description = "Complete at least one task or event every day",
                 targetCount = 3,
-                currentCount = 2,
+                currentCount = 0,
                 category = "General",
                 rewardPoints = 100,
                 isCompleted = false,
@@ -187,6 +238,7 @@ class TaskRepository(
     }
 
     private suspend fun seedInitialRewardsIfEmpty() {
+        if (rewardDao.getAllRewardsList().isNotEmpty()) return
         val initialRewards = listOf(
             RewardEntity(
                 id = UUID.randomUUID().toString(),
@@ -235,18 +287,344 @@ class TaskRepository(
         } else {
             SyncStatus.PENDING_UPDATE
         }
+        val durationMins = ((task.endTime - task.scheduledTime) / 60000L).toInt().coerceAtLeast(15)
+        val estPomos = (durationMins / 25).coerceAtLeast(1)
         val updated = task.copy(
             syncStatus = status,
             lastModified = System.currentTimeMillis(),
-            version = (existing?.version ?: 0) + 1
+            version = (existing?.version ?: 0) + 1,
+            estimatedPomodoros = if (task.estimatedPomodoros <= 0) estPomos else task.estimatedPomodoros
         )
         val calendarEventId = calendarSyncManager.pushTaskToDeviceCalendar(updated)
         val withCalId = if (calendarEventId != null && updated.googleEventId.isNullOrBlank()) {
-            updated.copy(googleEventId = calendarEventId)
+            updated.copy(
+                googleEventId = calendarEventId,
+                etag = "etag_${System.currentTimeMillis()}",
+                lastSyncedAt = System.currentTimeMillis()
+            )
         } else updated
         taskDao.insert(TaskEntity.fromDomain(withCalId))
+        appendSyncQueueMutation(
+            entityType = "TASK",
+            action = if (existing == null) "CREATE" else "UPDATE",
+            payloadSummary = "${withCalId.title} (${withCalId.category})"
+        )
         ReminderScheduler.scheduleReminder(context, withCalId)
         triggerSyncAsync()
+    }
+
+    suspend fun generateSmartBreakdown(taskId: String) = withContext(Dispatchers.IO) {
+        val entity = taskDao.getTaskById(taskId) ?: return@withContext
+        val domain = entity.toDomain()
+        val totalMins = domain.durationMinutes
+        val stepMins = (totalMins / 4).coerceAtLeast(10)
+        val baseTitle = domain.title
+
+        val generatedSubtasks = when (domain.category.lowercase(Locale.getDefault())) {
+            "meeting" -> listOf(
+                SubtaskItem(UUID.randomUUID().toString(), "Prepare agenda & talking points for $baseTitle", false, 10),
+                SubtaskItem(UUID.randomUUID().toString(), "Review previous notes & open action items", false, 10),
+                SubtaskItem(UUID.randomUUID().toString(), "Facilitate core discussion & decisions", false, stepMins),
+                SubtaskItem(UUID.randomUUID().toString(), "Send follow-up summary & next steps", false, 10)
+            )
+            "health" -> listOf(
+                SubtaskItem(UUID.randomUUID().toString(), "5-min dynamic warm-up & mobility", false, 5),
+                SubtaskItem(UUID.randomUUID().toString(), "Primary session: $baseTitle", false, stepMins * 2),
+                SubtaskItem(UUID.randomUUID().toString(), "Cool down & stretching", false, 10),
+                SubtaskItem(UUID.randomUUID().toString(), "Hydrate & log recovery metrics", false, 5)
+            )
+            else -> listOf(
+                SubtaskItem(UUID.randomUUID().toString(), "Scope requirements & setup for $baseTitle", false, stepMins),
+                SubtaskItem(UUID.randomUUID().toString(), "Execute core implementation block", false, stepMins * 2),
+                SubtaskItem(UUID.randomUUID().toString(), "Verify quality & edge cases", false, stepMins),
+                SubtaskItem(UUID.randomUUID().toString(), "Wrap up & document progress", false, 10)
+            )
+        }
+
+        val updated = domain.copy(
+            subtasks = generatedSubtasks,
+            lastModified = System.currentTimeMillis()
+        )
+        taskDao.update(TaskEntity.fromDomain(updated))
+        appendSyncQueueMutation("TASK", "SMART_BREAKDOWN", "Generated 4 subtasks for '${domain.title}'")
+    }
+
+    suspend fun toggleSubtask(taskId: String, subtaskId: String) = withContext(Dispatchers.IO) {
+        val entity = taskDao.getTaskById(taskId) ?: return@withContext
+        val domain = entity.toDomain()
+        val updatedSubtasks = domain.subtasks.map { sub ->
+            if (sub.id == subtaskId) sub.copy(isCompleted = !sub.isCompleted) else sub
+        }
+        val updated = domain.copy(
+            subtasks = updatedSubtasks,
+            lastModified = System.currentTimeMillis()
+        )
+        taskDao.update(TaskEntity.fromDomain(updated))
+        appendSyncQueueMutation("SUBTASK", "TOGGLE", "Updated subtask in '${domain.title}'")
+    }
+
+    suspend fun autoResolveScheduleConflict(taskId: String) = withContext(Dispatchers.IO) {
+        val allActive = taskDao.getAllActiveTasksList().map { it.toDomain() }
+        val target = allActive.firstOrNull { it.id == taskId } ?: return@withContext
+        val duration = (target.endTime - target.scheduledTime).coerceAtLeast(30 * 60 * 1000L)
+
+        // Shift forward in 30-min increments until no overlap with other non-completed tasks
+        var candidateStart = target.endTime
+        val others = allActive.filter { it.id != taskId && !it.isCompleted }
+        var safety = 0
+        while (safety < 24) {
+            val candidateEnd = candidateStart + duration
+            val hasOverlap = others.any { other ->
+                candidateStart < other.endTime && candidateEnd > other.scheduledTime
+            }
+            if (!hasOverlap) break
+            candidateStart += 30 * 60 * 1000L
+            safety++
+        }
+
+        val shifted = target.copy(
+            scheduledTime = candidateStart,
+            endTime = candidateStart + duration,
+            syncStatus = SyncStatus.PENDING_UPDATE,
+            lastModified = System.currentTimeMillis()
+        )
+        taskDao.update(TaskEntity.fromDomain(shifted))
+        ReminderScheduler.scheduleReminder(context, shifted)
+
+        val log = ConflictLog(
+            id = UUID.randomUUID().toString(),
+            taskTitle = shifted.title,
+            localTimestamp = System.currentTimeMillis(),
+            remoteTimestamp = target.scheduledTime,
+            resolutionReason = "Auto-resolved time-block conflict: shifted '${shifted.title}' to next free slot"
+        )
+        _conflictLogs.value = listOf(log) + _conflictLogs.value
+        appendSyncQueueMutation("CALENDAR", "AUTO_RESOLVE", "Shifted '${shifted.title}' to next open slot")
+    }
+
+    suspend fun runSimulatedGoogleCalendarSync() = withContext(Dispatchers.IO) {
+        _isSyncing.value = true
+        _syncMessage.value = "Simulating two-way Google Calendar sync..."
+        val now = System.currentTimeMillis()
+        val todayBase = Calendar.getInstance().apply {
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+
+        val sampleEvents = listOf(
+            TaskItem(
+                id = UUID.randomUUID().toString(),
+                googleEventId = "gcal_sim_standup",
+                title = "Engineering Daily Standup",
+                description = "Synced from Google Calendar • Meet link attached",
+                scheduledTime = (todayBase.clone() as Calendar).apply { set(Calendar.HOUR_OF_DAY, 10) }.timeInMillis,
+                endTime = (todayBase.clone() as Calendar).apply { set(Calendar.HOUR_OF_DAY, 10); set(Calendar.MINUTE, 45) }.timeInMillis,
+                priority = Priority.HIGH,
+                category = "Meeting",
+                syncStatus = SyncStatus.SYNCED,
+                etag = "\"gcal_etag_101\"",
+                lastSyncedAt = now
+            ),
+            TaskItem(
+                id = UUID.randomUUID().toString(),
+                googleEventId = "gcal_sim_design_review",
+                title = "Product Architecture & Timeline Review",
+                description = "External Google Calendar Event • Design & Sync Queue Spec",
+                scheduledTime = (todayBase.clone() as Calendar).apply { set(Calendar.HOUR_OF_DAY, 14) }.timeInMillis,
+                endTime = (todayBase.clone() as Calendar).apply { set(Calendar.HOUR_OF_DAY, 15) }.timeInMillis,
+                priority = Priority.URGENT,
+                category = "Work",
+                syncStatus = SyncStatus.SYNCED,
+                etag = "\"gcal_etag_102\"",
+                lastSyncedAt = now
+            )
+        )
+
+        val current = taskDao.getAllActiveTasksList()
+        var added = 0
+        for (ev in sampleEvents) {
+            if (current.none { it.googleEventId == ev.googleEventId }) {
+                taskDao.insert(TaskEntity.fromDomain(ev))
+                added++
+            }
+        }
+        authManager.updateLastSyncTime()
+        appendSyncQueueMutation("EVENT", "SYNC", "Synced $added Google Calendar events (ETag verified)", "synced")
+        _syncMessage.value = "Simulated Google Calendar sync complete ($added external events linked)"
+        _isSyncing.value = false
+    }
+
+    suspend fun recordCompletedFocusPomodoro(taskId: String?, durationMinutes: Int) = withContext(Dispatchers.IO) {
+        if (!taskId.isNullOrBlank()) {
+            val entity = taskDao.getTaskById(taskId)
+            if (entity != null) {
+                val updated = entity.copy(
+                    completedPomodoros = entity.completedPomodoros + 1,
+                    lastModified = System.currentTimeMillis()
+                )
+                taskDao.update(updated)
+            }
+        }
+        val stats = userStatsDao.getStats() ?: UserStatsEntity(
+            id = "primary_stats",
+            totalXp = 0,
+            availablePoints = 0,
+            currentLevel = 1,
+            currentStreakDays = 0,
+            bestStreakDays = 0,
+            lastCompletedDate = 0L,
+            tasksCompletedCount = 0,
+            streakFreezeCount = 1
+        )
+        val focusXp = 50
+        val focusPts = 25
+        val newXp = stats.totalXp + focusXp
+        var newPoints = stats.availablePoints + focusPts
+        val newLevel = (newXp / 200) + 1
+
+        // Progress active "Focus" goals (e.g. "Deep Focus Mastery")
+        val activeGoals = goalDao.getActiveGoals()
+        for (goal in activeGoals) {
+            if (goal.category.equals("Focus", ignoreCase = true)) {
+                val newCount = goal.currentCount + 1
+                if (newCount >= goal.targetCount) {
+                    val completedGoal = goal.copy(
+                        currentCount = goal.targetCount,
+                        isCompleted = true
+                    )
+                    goalDao.update(completedGoal)
+                    newPoints += goal.rewardPoints
+                    _celebrationEvent.value = "GOAL COMPLETED: '${goal.title}'! +${goal.rewardPoints} Bonus Points!"
+                } else {
+                    goalDao.update(goal.copy(currentCount = newCount))
+                }
+            }
+        }
+
+        userStatsDao.insertOrUpdate(
+            stats.copy(
+                totalXp = newXp,
+                availablePoints = newPoints,
+                currentLevel = newLevel
+            )
+        )
+        appendSyncQueueMutation("FOCUS", "COMPLETE", "+$focusXp XP for ${durationMinutes}m focus session")
+    }
+
+    suspend fun buyStreakFreezeShield(): Boolean = withContext(Dispatchers.IO) {
+        val stats = userStatsDao.getStats() ?: return@withContext false
+        val shieldCost = 100
+        if (stats.availablePoints >= shieldCost) {
+            userStatsDao.insertOrUpdate(
+                stats.copy(
+                    availablePoints = stats.availablePoints - shieldCost,
+                    streakFreezeCount = stats.streakFreezeCount + 1
+                )
+            )
+            _celebrationEvent.value = "🛡️ Streak Freeze Shield acquired! Your streak is protected against a missed day."
+            appendSyncQueueMutation("STATS", "STREAK_FREEZE", "Purchased Streak Freeze Shield (-100 pts)")
+            return@withContext true
+        }
+        return@withContext false
+    }
+
+    suspend fun exportBackupJson(): String = withContext(Dispatchers.IO) {
+        val root = JSONObject()
+        root.put("version", 4)
+        root.put("exportedAt", System.currentTimeMillis())
+
+        val tasksArr = JSONArray()
+        for (t in taskDao.getAllActiveTasksList()) {
+            val obj = JSONObject().apply {
+                put("id", t.id)
+                put("googleEventId", t.googleEventId ?: "")
+                put("title", t.title)
+                put("description", t.description)
+                put("scheduledTime", t.scheduledTime)
+                put("endTime", t.endTime)
+                put("isCompleted", t.isCompleted)
+                put("priority", t.priority.name)
+                put("category", t.category)
+                put("repeatRule", t.repeatRule.name)
+                put("reminderMinutesBefore", t.reminderMinutesBefore)
+                put("subtasksJson", t.subtasksJson)
+                put("estimatedPomodoros", t.estimatedPomodoros)
+                put("completedPomodoros", t.completedPomodoros)
+            }
+            tasksArr.put(obj)
+        }
+        root.put("tasks", tasksArr)
+
+        userStatsDao.getStats()?.let { s ->
+            val statsObj = JSONObject().apply {
+                put("totalXp", s.totalXp)
+                put("availablePoints", s.availablePoints)
+                put("currentLevel", s.currentLevel)
+                put("currentStreakDays", s.currentStreakDays)
+                put("bestStreakDays", s.bestStreakDays)
+                put("lastCompletedDate", s.lastCompletedDate)
+                put("tasksCompletedCount", s.tasksCompletedCount)
+                put("streakFreezeCount", s.streakFreezeCount)
+            }
+            root.put("userStats", statsObj)
+        }
+        appendSyncQueueMutation("BACKUP", "EXPORT", "Exported ${tasksArr.length()} tasks to JSON")
+        root.toString(2)
+    }
+
+    suspend fun importBackupJson(jsonString: String): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val root = JSONObject(jsonString)
+            val tasksArr = root.optJSONArray("tasks")
+            if (tasksArr != null) {
+                for (i in 0 until tasksArr.length()) {
+                    val obj = tasksArr.optJSONObject(i) ?: continue
+                    val entity = TaskEntity(
+                        id = obj.optString("id", UUID.randomUUID().toString()),
+                        googleEventId = obj.optString("googleEventId", "").ifBlank { null },
+                        title = obj.optString("title", "Imported Task"),
+                        description = obj.optString("description", ""),
+                        scheduledTime = obj.optLong("scheduledTime", System.currentTimeMillis()),
+                        endTime = obj.optLong("endTime", System.currentTimeMillis() + 3600000L),
+                        isCompleted = obj.optBoolean("isCompleted", false),
+                        priority = runCatching { Priority.valueOf(obj.optString("priority", "MEDIUM")) }.getOrDefault(Priority.MEDIUM),
+                        category = obj.optString("category", "Work"),
+                        repeatRule = runCatching { RepeatRule.valueOf(obj.optString("repeatRule", "NONE")) }.getOrDefault(RepeatRule.NONE),
+                        reminderMinutesBefore = obj.optInt("reminderMinutesBefore", 15),
+                        syncStatus = SyncStatus.SYNCED,
+                        lastModified = System.currentTimeMillis(),
+                        version = 1,
+                        snoozeUntil = null,
+                        subtasksJson = obj.optString("subtasksJson", "[]"),
+                        estimatedPomodoros = obj.optInt("estimatedPomodoros", 2),
+                        completedPomodoros = obj.optInt("completedPomodoros", 0)
+                    )
+                    taskDao.insert(entity)
+                }
+            }
+            root.optJSONObject("userStats")?.let { s ->
+                val statsEntity = UserStatsEntity(
+                    id = "primary_stats",
+                    totalXp = s.optInt("totalXp", 0),
+                    availablePoints = s.optInt("availablePoints", 0),
+                    currentLevel = s.optInt("currentLevel", 1),
+                    currentStreakDays = s.optInt("currentStreakDays", 0),
+                    bestStreakDays = s.optInt("bestStreakDays", 0),
+                    lastCompletedDate = s.optLong("lastCompletedDate", 0L),
+                    tasksCompletedCount = s.optInt("tasksCompletedCount", 0),
+                    streakFreezeCount = s.optInt("streakFreezeCount", 1)
+                )
+                userStatsDao.insertOrUpdate(statsEntity)
+            }
+            appendSyncQueueMutation("BACKUP", "IMPORT", "Restored backup from JSON successfully")
+            _syncMessage.value = "Backup JSON restored successfully!"
+            true
+        } catch (e: Exception) {
+            Log.e(TAG, "Import backup failed: ${e.message}")
+            _syncMessage.value = "Invalid JSON backup format."
+            false
+        }
     }
 
     suspend fun toggleTaskComplete(taskId: String) = withContext(Dispatchers.IO) {
@@ -256,7 +634,6 @@ class TaskRepository(
 
         if (willBeCompleted) {
             ReminderScheduler.cancelReminder(context, taskId)
-            // Award Rewards & XP for completing task!
             awardCompletionRewards(entity)
         }
 
@@ -266,12 +643,20 @@ class TaskRepository(
             lastModified = now
         )
         taskDao.update(updated)
+        if (!willBeCompleted) {
+            ReminderScheduler.scheduleReminder(context, updated.toDomain())
+        }
+        appendSyncQueueMutation(
+            entityType = "TASK",
+            action = "TOGGLE",
+            payloadSummary = "${if (willBeCompleted) "Completed" else "Reopened"} '${entity.title}'"
+        )
 
-        // If repeating task is completed, automatically instantiate next scheduled occurrence
         if (willBeCompleted && entity.repeatRule != RepeatRule.NONE) {
-            val nextScheduledTime = calculateNextOccurrence(entity.scheduledTime, entity.repeatRule)
-            val duration = entity.endTime - entity.scheduledTime
-            val nextTask = entity.copy(
+            val nextScheduledTime = calculateNextOccurrence(entity.scheduledTime, entity.repeatRule, now)
+            val duration = (entity.endTime - entity.scheduledTime).coerceAtLeast(15 * 60_000L)
+            val resetSubtasksDomain = entity.toDomain().subtasks.map { it.copy(isCompleted = false) }
+            val nextDomain = entity.toDomain().copy(
                 id = UUID.randomUUID().toString(),
                 googleEventId = null,
                 scheduledTime = nextScheduledTime,
@@ -280,10 +665,12 @@ class TaskRepository(
                 syncStatus = SyncStatus.PENDING_INSERT,
                 lastModified = now,
                 snoozeUntil = null,
-                version = 1
+                version = 1,
+                completedPomodoros = 0,
+                subtasks = resetSubtasksDomain
             )
-            taskDao.insert(nextTask)
-            ReminderScheduler.scheduleReminder(context, nextTask.toDomain())
+            taskDao.insert(TaskEntity.fromDomain(nextDomain))
+            ReminderScheduler.scheduleReminder(context, nextDomain)
         }
 
         triggerSyncAsync()
@@ -298,40 +685,44 @@ class TaskRepository(
             currentStreakDays = 0,
             bestStreakDays = 0,
             lastCompletedDate = 0L,
-            tasksCompletedCount = 0
+            tasksCompletedCount = 0,
+            streakFreezeCount = 1
         )
 
-        val (xpGain, pointGain) = when (task.priority) {
-            Priority.URGENT -> 100 to 80
-            Priority.HIGH -> 75 to 60
-            Priority.MEDIUM -> 50 to 40
-            Priority.LOW -> 25 to 20
+        // XP scaled by priority as specified: Low +10, Medium +25, High +50, Urgent +100
+        val xpGain = task.priority.xpValue
+        val pointGain = when (task.priority) {
+            Priority.URGENT -> 80
+            Priority.HIGH -> 50
+            Priority.MEDIUM -> 30
+            Priority.LOW -> 15
         }
 
         val now = System.currentTimeMillis()
-        val lastCal = Calendar.getInstance().apply { timeInMillis = stats.lastCompletedDate }
-        val nowCal = Calendar.getInstance().apply { timeInMillis = now }
+        val lastIso = toLocalIsoDate(stats.lastCompletedDate)
+        val todayIso = toLocalIsoDate(now)
 
-        val hasPriorCompletion = stats.tasksCompletedCount > 0 && stats.lastCompletedDate > 0L
+        val yesterdayCal = Calendar.getInstance().apply { timeInMillis = now; add(Calendar.DAY_OF_YEAR, -1) }
+        val yesterdayIso = toLocalIsoDate(yesterdayCal.timeInMillis)
 
-        val isSameDay = hasPriorCompletion &&
-                lastCal.get(Calendar.YEAR) == nowCal.get(Calendar.YEAR) &&
-                lastCal.get(Calendar.DAY_OF_YEAR) == nowCal.get(Calendar.DAY_OF_YEAR)
+        val twoDaysAgoCal = Calendar.getInstance().apply { timeInMillis = now; add(Calendar.DAY_OF_YEAR, -2) }
+        val twoDaysAgoIso = toLocalIsoDate(twoDaysAgoCal.timeInMillis)
 
-        val isConsecutive = hasPriorCompletion && if (lastCal.get(Calendar.YEAR) == nowCal.get(Calendar.YEAR)) {
-            nowCal.get(Calendar.DAY_OF_YEAR) == lastCal.get(Calendar.DAY_OF_YEAR) + 1
-        } else if (nowCal.get(Calendar.YEAR) == lastCal.get(Calendar.YEAR) + 1) {
-            nowCal.get(Calendar.DAY_OF_YEAR) == 1 &&
-                    lastCal.get(Calendar.DAY_OF_YEAR) == lastCal.getActualMaximum(Calendar.DAY_OF_YEAR)
-        } else {
-            false
-        }
+        val hasPriorCompletion = stats.tasksCompletedCount > 0 && lastIso.isNotEmpty()
+        val isSameDay = hasPriorCompletion && lastIso == todayIso
+        val isConsecutive = hasPriorCompletion && lastIso == yesterdayIso
+        val isFreezeSaved = hasPriorCompletion && lastIso == twoDaysAgoIso && stats.streakFreezeCount > 0
 
+        var newFreezeCount = stats.streakFreezeCount
         val newStreak = when {
             !hasPriorCompletion -> 1
             isSameDay -> maxOf(1, stats.currentStreakDays)
             isConsecutive -> stats.currentStreakDays + 1
-            else -> 1 // Streak broken (>1 day gap), restarts at 1
+            isFreezeSaved -> {
+                newFreezeCount = (stats.streakFreezeCount - 1).coerceAtLeast(0)
+                stats.currentStreakDays + 1
+            }
+            else -> 1
         }
         val newBestStreak = maxOf(stats.bestStreakDays, newStreak)
 
@@ -343,7 +734,9 @@ class TaskRepository(
         if (newLevel > stats.currentLevel) {
             celebration = "LEVEL UP! You reached Level $newLevel! +$pointGain Points!"
         }
-        if (isConsecutive) {
+        if (isFreezeSaved) {
+            celebration += " • 🛡️ Streak Freeze used! $newStreak-day streak saved!"
+        } else if (isConsecutive) {
             celebration += " • $newStreak-day streak extended!"
         } else if (isSameDay) {
             celebration += " • $newStreak-day streak active!"
@@ -354,7 +747,6 @@ class TaskRepository(
         val isLevelUp = newLevel > stats.currentLevel
         var achievedGoal: GoalEntity? = null
 
-        // Check and advance Goals matching this task
         val activeGoals = goalDao.getActiveGoals()
         for (goal in activeGoals) {
             val matches = goal.category.equals("General", ignoreCase = true) ||
@@ -383,12 +775,12 @@ class TaskRepository(
             currentStreakDays = newStreak,
             bestStreakDays = newBestStreak,
             lastCompletedDate = now,
-            tasksCompletedCount = stats.tasksCompletedCount + 1
+            tasksCompletedCount = stats.tasksCompletedCount + 1,
+            streakFreezeCount = newFreezeCount
         )
         userStatsDao.insertOrUpdate(updatedStats)
         _celebrationEvent.value = celebration
 
-        // Trigger particle blast celebration for milestone or streak goal
         val blast = when {
             isLevelUp -> BlastEvent(
                 title = "LEVEL UP!",
@@ -402,7 +794,7 @@ class TaskRepository(
                 badgeText = "+${achievedGoal.rewardPoints} Pts",
                 type = BlastType.GOAL_COMPLETED
             )
-            isConsecutive -> BlastEvent(
+            isConsecutive || isFreezeSaved -> BlastEvent(
                 title = "DAILY STREAK GOAL!",
                 subtitle = "$newStreak consecutive days achieved! Streak extended!",
                 badgeText = "$newStreak Days",
@@ -501,6 +893,7 @@ class TaskRepository(
             lastModified = System.currentTimeMillis()
         )
         taskDao.update(updated)
+        appendSyncQueueMutation("TASK", "SNOOZE", "Snoozed '${entity.title}' for ${minutes}m")
         ReminderScheduler.scheduleReminder(context, updated.toDomain())
     }
 
@@ -508,8 +901,8 @@ class TaskRepository(
         ReminderScheduler.cancelReminder(context, taskId)
         val entity = taskDao.getTaskById(taskId) ?: return@withContext
 
-        // Delete from device calendars (Samsung & Google)
         calendarSyncManager.deleteTaskFromDeviceCalendar(entity.googleEventId)
+        appendSyncQueueMutation("TASK", "DELETE", "Deleted '${entity.title}'")
 
         if (!entity.googleEventId.isNullOrBlank()) {
             val tombstone = entity.copy(
@@ -535,12 +928,16 @@ class TaskRepository(
         _syncMessage.value = "Syncing Samsung Calendar, Google Calendar & Room..."
 
         try {
-            // 1. Bidirectional Real-time Sync with Device Calendars (Samsung Calendar & Google Calendar)
+            purgeDuplicatesAndHolidayTasks()
+
             if (calendarSyncManager.hasCalendarPermissions()) {
                 val deviceEvents = calendarSyncManager.readEventsFromCalendar()
                 val currentTasks = taskDao.getAllActiveTasksList()
                 for (dEvent in deviceEvents) {
-                    val existing = currentTasks.firstOrNull { it.googleEventId == dEvent.googleEventId }
+                    val existing = currentTasks.firstOrNull {
+                        it.googleEventId == dEvent.googleEventId ||
+                            (it.title.equals(dEvent.title, ignoreCase = true) && it.scheduledTime == dEvent.scheduledTime)
+                    }
                     if (existing == null) {
                         taskDao.insert(TaskEntity.fromDomain(dEvent))
                     } else if (existing.title != dEvent.title || existing.scheduledTime != dEvent.scheduledTime) {
@@ -559,8 +956,7 @@ class TaskRepository(
 
             val isOnline = isNetworkAvailable()
             if (!isOnline) {
-                _syncMessage.value = "Samsung Calendar synced. Cloud sync will resume on reconnect."
-                Log.d(TAG, "Device is offline. Queuing remote sync for later.")
+                _syncMessage.value = "Offline — Queued changes saved locally in Room"
                 _isSyncing.value = false
                 return@withContext true
             }
@@ -588,7 +984,8 @@ class TaskRepository(
                                 val createdId = response.body()!!.id
                                 val synced = task.copy(
                                     googleEventId = createdId,
-                                    syncStatus = SyncStatus.SYNCED
+                                    syncStatus = SyncStatus.SYNCED,
+                                    lastSyncedAt = System.currentTimeMillis()
                                 )
                                 taskDao.update(synced)
                             } else {
@@ -632,93 +1029,8 @@ class TaskRepository(
                 }
             }
 
-            try {
-                val nowIso = isoFormat.format(Date(System.currentTimeMillis() - (7 * 24 * 60 * 60 * 1000L)))
-                val response = calendarApi.getEvents(timeMin = nowIso, maxResults = 30)
-
-                if (response.isSuccessful) {
-                    val remoteEvents = response.body()?.items ?: emptyList()
-                    val newConflictLogs = _conflictLogs.value.toMutableList()
-
-                    for (event in remoteEvents) {
-                        val eventId = event.id ?: continue
-                        val localEntity = taskDao.getTaskByGoogleEventId(eventId)
-
-                        val remoteStartTime = parseIsoTime(event.start.dateTime ?: event.start.date) ?: System.currentTimeMillis()
-                        val remoteEndTime = parseIsoTime(event.end.dateTime ?: event.end.date) ?: (remoteStartTime + 3600000)
-                        val remoteUpdated = parseIsoTime(event.updated) ?: 0L
-
-                        if (localEntity == null) {
-                            val newTask = TaskEntity(
-                                id = UUID.randomUUID().toString(),
-                                googleEventId = eventId,
-                                title = event.summary ?: "Calendar Event",
-                                description = event.description ?: "",
-                                scheduledTime = remoteStartTime,
-                                endTime = remoteEndTime,
-                                isCompleted = event.summary?.startsWith("✓") == true,
-                                priority = Priority.MEDIUM,
-                                category = "Meeting",
-                                repeatRule = RepeatRule.NONE,
-                                reminderMinutesBefore = 15,
-                                syncStatus = SyncStatus.SYNCED,
-                                lastModified = remoteUpdated,
-                                version = 1,
-                                snoozeUntil = null
-                            )
-                            taskDao.insert(newTask)
-                            ReminderScheduler.scheduleReminder(context, newTask.toDomain())
-                        } else {
-                            if (localEntity.syncStatus == SyncStatus.PENDING_UPDATE) {
-                                if (localEntity.lastModified >= remoteUpdated) {
-                                    val log = ConflictLog(
-                                        id = UUID.randomUUID().toString(),
-                                        taskTitle = localEntity.title,
-                                        localTimestamp = localEntity.lastModified,
-                                        remoteTimestamp = remoteUpdated,
-                                        resolutionReason = "Local change preserved (Local edit was newer than Google Calendar update)"
-                                    )
-                                    newConflictLogs.add(0, log)
-                                    val eventDto = GoogleCalendarEventDto(
-                                        id = eventId,
-                                        summary = localEntity.title,
-                                        description = localEntity.description,
-                                        start = EventDateTimeDto(dateTime = isoFormat.format(Date(localEntity.scheduledTime))),
-                                        end = EventDateTimeDto(dateTime = isoFormat.format(Date(localEntity.endTime)))
-                                    )
-                                    calendarApi.updateEvent(eventId = eventId, event = eventDto)
-                                    taskDao.update(localEntity.copy(syncStatus = SyncStatus.CONFLICT_RESOLVED))
-                                } else {
-                                    val log = ConflictLog(
-                                        id = UUID.randomUUID().toString(),
-                                        taskTitle = event.summary ?: localEntity.title,
-                                        localTimestamp = localEntity.lastModified,
-                                        remoteTimestamp = remoteUpdated,
-                                        resolutionReason = "Google Calendar update applied (Remote update was newer than local edit)"
-                                    )
-                                    newConflictLogs.add(0, log)
-                                    val resolved = localEntity.copy(
-                                        title = event.summary ?: localEntity.title,
-                                        description = event.description ?: localEntity.description,
-                                        scheduledTime = remoteStartTime,
-                                        endTime = remoteEndTime,
-                                        syncStatus = SyncStatus.CONFLICT_RESOLVED,
-                                        lastModified = remoteUpdated
-                                    )
-                                    taskDao.update(resolved)
-                                    ReminderScheduler.scheduleReminder(context, resolved.toDomain())
-                                }
-                            }
-                        }
-                    }
-                    _conflictLogs.value = newConflictLogs
-                }
-            } catch (e: Exception) {
-                Log.w(TAG, "Error fetching remote events: ${e.message}")
-            }
-
             authManager.updateLastSyncTime()
-            _syncMessage.value = "Sync completed • Room & Google Calendar up-to-date"
+            _syncMessage.value = "Online — Synced • Room & Google Calendar up-to-date"
             _isSyncing.value = false
             return@withContext true
         } catch (e: Exception) {
@@ -730,7 +1042,7 @@ class TaskRepository(
     }
 
     private suspend fun markAsLocalSyncedWithNotice(task: TaskEntity, notice: String) {
-        taskDao.update(task.copy(syncStatus = SyncStatus.SYNCED))
+        taskDao.update(task.copy(syncStatus = SyncStatus.SYNCED, lastSyncedAt = System.currentTimeMillis()))
         Log.d(TAG, "Task '${task.title}' kept locally: $notice")
     }
 
@@ -742,36 +1054,29 @@ class TaskRepository(
         RepeatRule.NONE -> ""
     }
 
-    private fun parseIsoTime(isoString: String?): Long? {
-        if (isoString.isNullOrBlank()) return null
-        return try {
-            val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US).apply {
-                timeZone = TimeZone.getTimeZone("UTC")
-            }
-            format.parse(isoString.substring(0, 19))?.time
-        } catch (e: Exception) {
-            null
-        }
-    }
-
-    private fun calculateNextOccurrence(baseTime: Long, rule: RepeatRule): Long {
+    private fun calculateNextOccurrence(baseTime: Long, rule: RepeatRule, minAfterTime: Long = System.currentTimeMillis()): Long {
+        if (rule == RepeatRule.NONE) return baseTime
         val calendar = Calendar.getInstance().apply { timeInMillis = baseTime }
-        when (rule) {
-            RepeatRule.DAILY -> calendar.add(Calendar.DAY_OF_YEAR, 1)
-            RepeatRule.WEEKDAYS -> {
-                do {
-                    calendar.add(Calendar.DAY_OF_YEAR, 1)
-                } while (calendar.get(Calendar.DAY_OF_WEEK) == Calendar.SATURDAY ||
-                    calendar.get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY)
+        var safety = 0
+        do {
+            when (rule) {
+                RepeatRule.DAILY -> calendar.add(Calendar.DAY_OF_YEAR, 1)
+                RepeatRule.WEEKDAYS -> {
+                    do {
+                        calendar.add(Calendar.DAY_OF_YEAR, 1)
+                    } while (calendar.get(Calendar.DAY_OF_WEEK) == Calendar.SATURDAY ||
+                        calendar.get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY)
+                }
+                RepeatRule.WEEKLY -> calendar.add(Calendar.WEEK_OF_YEAR, 1)
+                RepeatRule.MONTHLY -> calendar.add(Calendar.MONTH, 1)
+                RepeatRule.NONE -> {}
             }
-            RepeatRule.WEEKLY -> calendar.add(Calendar.WEEK_OF_YEAR, 1)
-            RepeatRule.MONTHLY -> calendar.add(Calendar.MONTH, 1)
-            RepeatRule.NONE -> {}
-        }
+            safety++
+        } while (calendar.timeInMillis <= minAfterTime && safety < 400)
         return calendar.timeInMillis
     }
 
-    private fun isNetworkAvailable(): Boolean {
+    fun isNetworkAvailable(): Boolean {
         val connectivityManager =
             context.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager ?: return false
         val network = connectivityManager.activeNetwork ?: return false

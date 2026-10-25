@@ -120,7 +120,21 @@ fun SnoozeOptionsBottomSheet(
                 icon = Icons.Default.NightlightRound,
                 title = "This Evening (6:00 PM)",
                 subtitle = "Wind down and wrap up",
-                onClick = { onSnoozeSelected(240) },
+                onClick = {
+                    val now = System.currentTimeMillis()
+                    val eveningCal = java.util.Calendar.getInstance().apply {
+                        timeInMillis = now
+                        set(java.util.Calendar.HOUR_OF_DAY, 18)
+                        set(java.util.Calendar.MINUTE, 0)
+                        set(java.util.Calendar.SECOND, 0)
+                        set(java.util.Calendar.MILLISECOND, 0)
+                        if (timeInMillis <= now + 5 * 60_000L) {
+                            add(java.util.Calendar.DAY_OF_YEAR, 1)
+                        }
+                    }
+                    val minsUntilEvening = ((eveningCal.timeInMillis - now) / 60_000L).toInt().coerceAtLeast(15)
+                    onSnoozeSelected(minsUntilEvening)
+                },
                 tag = "snooze_evening"
             )
 
@@ -128,7 +142,19 @@ fun SnoozeOptionsBottomSheet(
                 icon = Icons.Default.DateRange,
                 title = "Tomorrow Morning (9:00 AM)",
                 subtitle = "Reschedule alarm for tomorrow",
-                onClick = { onSnoozeSelected(1440) },
+                onClick = {
+                    val now = System.currentTimeMillis()
+                    val tomorrowCal = java.util.Calendar.getInstance().apply {
+                        timeInMillis = now
+                        add(java.util.Calendar.DAY_OF_YEAR, 1)
+                        set(java.util.Calendar.HOUR_OF_DAY, 9)
+                        set(java.util.Calendar.MINUTE, 0)
+                        set(java.util.Calendar.SECOND, 0)
+                        set(java.util.Calendar.MILLISECOND, 0)
+                    }
+                    val minsUntilTomorrow = ((tomorrowCal.timeInMillis - now) / 60_000L).toInt().coerceAtLeast(60)
+                    onSnoozeSelected(minsUntilTomorrow)
+                },
                 tag = "snooze_tomorrow"
             )
 

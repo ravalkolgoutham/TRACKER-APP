@@ -4,46 +4,54 @@
     android:viewportWidth="200"
     android:viewportHeight="150">
 
-    <!-- Atmospheric halo -->
+    <!-- Atmospheric Aero Cyan halo -->
     <path
-        android:fillColor="#141414"
-        android:pathData="M 100,75 m -60,0 a 60,60 0 1,0 120,0 a 60,60 0 1,0 -120,0" />
+        android:fillColor="#2634C8E8"
+        android:pathData="M 100,75 m -62,0 a 62,62 0 1,0 124,0 a 62,62 0 1,0 -124,0" />
 
-    <!-- Cloud outline -->
+    <!-- Frosted Cloud outline -->
     <path
-        android:fillColor="#1C1C1C"
-        android:strokeColor="#FFFFFF"
-        android:strokeWidth="1.5"
+        android:fillColor="#FF22314E"
+        android:strokeColor="#FF34C8E8"
+        android:strokeWidth="1.8"
         android:pathData="M 70,80 a 16,16 0 0,1 28,-10 a 24,24 0 0,1 42,6 a 18,18 0 0,1 18,18 a 18,18 0 0,1 -18,18 h -70 a 16,16 0 0,1 0,-32 Z" />
 
-    <!-- Phone on right -->
+    <!-- Glass Phone on right -->
     <path
-        android:fillColor="#141414"
-        android:strokeColor="#FFFFFF"
-        android:strokeWidth="1.5"
+        android:fillColor="#FF1E293B"
+        android:strokeColor="#FF818CF8"
+        android:strokeWidth="1.8"
         android:pathData="M 132,60 h 30 c 4,0 7,3 7,7 v 50 c 0,4 -3,7 -7,7 h -30 c -4,0 -7,-3 -7,-7 v -50 c 0,-4 3,-7 7,-7 Z" />
     <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M 147,118 m -2,0 a 2,2 0 1,0 4,0 a 2,2 0 1,0 -4,0" />
+        android:fillColor="#FF34C8E8"
+        android:pathData="M 147,118 m -2.5,0 a 2.5,2.5 0 1,0 5,0 a 2.5,2.5 0 1,0 -5,0" />
     <path
-        android:fillColor="#888888"
-        android:pathData="M 138,72 h 18 v 2 h -18 Z M 138,78 h 14 v 2 h -14 Z M 138,84 h 16 v 2 h -16 Z" />
+        android:fillColor="#FF38BDF8"
+        android:pathData="M 138,72 h 18 v 2.5 h -18 Z" />
+    <path
+        android:fillColor="#FF10B981"
+        android:pathData="M 138,78 h 14 v 2.5 h -14 Z" />
+    <path
+        android:fillColor="#FFA78BFA"
+        android:pathData="M 138,84 h 16 v 2.5 h -16 Z" />
 
     <!-- Sync connection beams & pulses -->
     <path
         android:fillColor="#00000000"
-        android:strokeColor="#FFFFFF"
-        android:strokeWidth="2"
+        android:strokeColor="#FF67E8F9"
+        android:strokeWidth="2.4"
         android:strokeLineCap="round"
         android:pathData="M 85,82 L 105,82 M 95,78 L 105,82 L 95,86" />
 
-    <!-- Safe lock badge -->
+    <!-- Safe lock badge in Royal Cobalt & Emerald -->
     <path
-        android:fillColor="#333333"
+        android:fillColor="#FF4B4CED"
+        android:strokeColor="#FF34C8E8"
+        android:strokeWidth="1.2"
         android:pathData="M 50,75 h 16 c 2,0 4,2 4,4 v 14 c 0,2 -2,4 -4,4 h -16 c -2,0 -4,-2 -4,-4 v -14 c 0,-2 2,-4 4,-4 Z" />
     <path
         android:fillColor="#00000000"
-        android:strokeColor="#FFFFFF"
-        android:strokeWidth="2"
+        android:strokeColor="#FF67E8F9"
+        android:strokeWidth="2.2"
         android:pathData="M 54,75 v -5 a 4,4 0 0,1 8,0 v 5" />
 </vector>

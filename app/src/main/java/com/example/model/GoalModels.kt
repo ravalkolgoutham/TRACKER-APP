@@ -1,5 +1,16 @@
 package com.example.model
 
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
+
+fun toLocalIsoDate(epochMillis: Long): String {
+    if (epochMillis <= 0L) return ""
+    val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+    return sdf.format(Date(epochMillis))
+}
+
 data class GoalItem(
     val id: String,
     val title: String,
@@ -15,6 +26,14 @@ data class GoalItem(
         get() = if (targetCount > 0) (currentCount.toFloat() / targetCount.toFloat()).coerceIn(0f, 1f) else 0f
 }
 
+data class AchievementBadge(
+    val id: String,
+    val title: String,
+    val description: String,
+    val isUnlocked: Boolean,
+    val progressLabel: String
+)
+
 data class UserRewardStats(
     val id: String = "primary_stats",
     val totalXp: Int = 0,
@@ -23,7 +42,8 @@ data class UserRewardStats(
     val currentStreakDays: Int = 0,
     val bestStreakDays: Int = 0,
     val lastCompletedDate: Long = 0L,
-    val tasksCompletedCount: Int = 0
+    val tasksCompletedCount: Int = 0,
+    val streakFreezeCount: Int = 1
 ) {
     val levelTitle: String
         get() = when (currentLevel) {
@@ -51,28 +71,26 @@ data class UserRewardStats(
     val isStreakMaintainedToday: Boolean
         get() {
             if (tasksCompletedCount == 0 || lastCompletedDate <= 0L) return false
-            val lastCal = java.util.Calendar.getInstance().apply { timeInMillis = lastCompletedDate }
-            val nowCal = java.util.Calendar.getInstance()
-            return lastCal.get(java.util.Calendar.YEAR) == nowCal.get(java.util.Calendar.YEAR) &&
-                    lastCal.get(java.util.Calendar.DAY_OF_YEAR) == nowCal.get(java.util.Calendar.DAY_OF_YEAR)
+            val lastIso = toLocalIsoDate(lastCompletedDate)
+            val todayIso = toLocalIsoDate(System.currentTimeMillis())
+            return lastIso == todayIso
         }
 
     val isStreakActive: Boolean
         get() {
             if (tasksCompletedCount == 0 || lastCompletedDate <= 0L) return false
-            val lastCal = java.util.Calendar.getInstance().apply { timeInMillis = lastCompletedDate }
-            val nowCal = java.util.Calendar.getInstance()
-            val sameDay = lastCal.get(java.util.Calendar.YEAR) == nowCal.get(java.util.Calendar.YEAR) &&
-                    lastCal.get(java.util.Calendar.DAY_OF_YEAR) == nowCal.get(java.util.Calendar.DAY_OF_YEAR)
-            val yesterday = if (lastCal.get(java.util.Calendar.YEAR) == nowCal.get(java.util.Calendar.YEAR)) {
-                lastCal.get(java.util.Calendar.DAY_OF_YEAR) == nowCal.get(java.util.Calendar.DAY_OF_YEAR) - 1
-            } else if (nowCal.get(java.util.Calendar.YEAR) == lastCal.get(java.util.Calendar.YEAR) + 1) {
-                nowCal.get(java.util.Calendar.DAY_OF_YEAR) == 1 &&
-                        lastCal.get(java.util.Calendar.DAY_OF_YEAR) == lastCal.getActualMaximum(java.util.Calendar.DAY_OF_YEAR)
-            } else {
-                false
-            }
-            return sameDay || yesterday
+            val lastIso = toLocalIsoDate(lastCompletedDate)
+            val todayIso = toLocalIsoDate(System.currentTimeMillis())
+            if (lastIso == todayIso) return true
+
+            val yesterdayCal = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, -1) }
+            val yesterdayIso = toLocalIsoDate(yesterdayCal.timeInMillis)
+            if (lastIso == yesterdayIso) return true
+
+            // If user has a Streak Freeze shield and missed just 1 day, streak stays protected
+            val twoDaysAgoCal = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, -2) }
+            val twoDaysAgoIso = toLocalIsoDate(twoDaysAgoCal.timeInMillis)
+            return streakFreezeCount > 0 && lastIso == twoDaysAgoIso
         }
 
     val displayStreakDays: Int
@@ -103,4 +121,3 @@ data class BlastEvent(
     val badgeText: String = "",
     val type: BlastType = BlastType.MILESTONE
 )
-

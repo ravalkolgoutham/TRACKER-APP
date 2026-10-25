@@ -4,52 +4,52 @@
     android:viewportWidth="200"
     android:viewportHeight="160">
 
-    <!-- Atmospheric concentric glowing rings -->
+    <!-- Atmospheric concentric glowing Aero rings -->
     <path
-        android:fillColor="#141414"
+        android:fillColor="#2234C8E8"
         android:pathData="M 100,80 m -70,0 a 70,70 0 1,0 140,0 a 70,70 0 1,0 -140,0" />
 
     <path
-        android:fillColor="#1A1A1A"
+        android:fillColor="#2C4B4CED"
         android:pathData="M 100,80 m -52,0 a 52,52 0 1,0 104,0 a 52,52 0 1,0 -104,0" />
 
     <!-- Outer Hourglass glass body -->
     <path
-        android:fillColor="#222222"
-        android:strokeColor="#FFFFFF"
+        android:fillColor="#FF1E293B"
+        android:strokeColor="#FF34C8E8"
         android:strokeWidth="2"
         android:pathData="M 72,40 h 56 c 4,0 6,2 6,6 v 6 c 0,16 -12,28 -28,28 c -16,0 -28,-12 -28,-28 v -6 c 0,-4 2,-6 6,-6 Z" />
 
     <path
-        android:fillColor="#222222"
-        android:strokeColor="#FFFFFF"
+        android:fillColor="#FF1E293B"
+        android:strokeColor="#FF818CF8"
         android:strokeWidth="2"
         android:pathData="M 78,80 c 16,0 28,12 28,28 v 6 c 0,4 -2,6 -6,6 h -56 c -4,0 -6,-2 -6,-6 v -6 c 0,-16 12,-28 28,-28 Z" />
 
-    <!-- Sands of focus time -->
+    <!-- Sands of focus time (Cyan & Golden Amber) -->
     <path
-        android:fillColor="#FFFFFF"
+        android:fillColor="#FF34C8E8"
         android:pathData="M 88,104 h 24 c 0,6 -4,10 -12,10 c -8,0 -12,-4 -12,-10 Z" />
     <path
-        android:fillColor="#888888"
+        android:fillColor="#FFF59E0B"
         android:pathData="M 82,48 h 36 c -2,8 -10,14 -18,14 c -8,0 -16,-6 -18,-14 Z" />
 
     <!-- Focus beam stream -->
     <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M 99,62 h 2 v 42 h -2 Z" />
+        android:fillColor="#FF67E8F9"
+        android:pathData="M 98.5,62 h 3 v 42 h -3 Z" />
 
-    <!-- Zen Particles in silver/white -->
+    <!-- Zen Particles in vibrant Cyan, Gold, Emerald, and Violet -->
     <path
-        android:fillColor="#CCCCCC"
-        android:pathData="M 50,60 m -3,0 a 3,3 0 1,0 6,0 a 3,3 0 1,0 -6,0" />
+        android:fillColor="#FF34C8E8"
+        android:pathData="M 50,60 m -3.5,0 a 3.5,3.5 0 1,0 7,0 a 3.5,3.5 0 1,0 -7,0" />
     <path
-        android:fillColor="#FFFFFF"
+        android:fillColor="#FFFBBF24"
         android:pathData="M 152,65 m -4,0 a 4,4 0 1,0 8,0 a 4,4 0 1,0 -8,0" />
     <path
-        android:fillColor="#888888"
-        android:pathData="M 145,108 m -2.5,0 a 2.5,2.5 0 1,0 5,0 a 2.5,2.5 0 1,0 -5,0" />
+        android:fillColor="#FFA78BFA"
+        android:pathData="M 145,108 m -3,0 a 3,3 0 1,0 6,0 a 3,3 0 1,0 -6,0" />
     <path
-        android:fillColor="#AAAAAA"
-        android:pathData="M 55,105 m -3,0 a 3,3 0 1,0 6,0 a 3,3 0 1,0 -6,0" />
+        android:fillColor="#FF10B981"
+        android:pathData="M 55,105 m -3.5,0 a 3.5,3.5 0 1,0 7,0 a 3.5,3.5 0 1,0 -7,0" />
 </vector>

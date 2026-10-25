@@ -13,12 +13,13 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.CheckCircle
@@ -45,15 +46,19 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.model.BlastType
 import com.example.ui.SyncTaskViewModel
 import com.example.ui.components.ParticleBlastOverlay
 import com.example.ui.screens.CalendarScreen
@@ -90,7 +95,6 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             SyncTaskTheme(darkTheme = true) {
-                // Request Notification Permission on Android 13+
                 val context = LocalContext.current
                 val permissionLauncher = rememberLauncherForActivityResult(
                     contract = ActivityResultContracts.RequestMultiplePermissions()
@@ -130,12 +134,10 @@ class MainActivity : ComponentActivity() {
 fun SyncTaskAppRoot(viewModel: SyncTaskViewModel) {
     var currentScreen by remember { mutableStateOf(AppScreen.TASKS) }
 
-    // Intercept back button when not on Tasks home screen
     BackHandler(enabled = currentScreen != AppScreen.TASKS) {
         currentScreen = AppScreen.TASKS
     }
 
-    // Collect UI state
     val filteredTasks by viewModel.filteredTasks.collectAsStateWithLifecycle()
     val allTasks by viewModel.tasks.collectAsStateWithLifecycle()
     val selectedCategory by viewModel.selectedCategory.collectAsStateWithLifecycle()
@@ -148,6 +150,7 @@ fun SyncTaskAppRoot(viewModel: SyncTaskViewModel) {
     val authEmail by viewModel.authEmail.collectAsStateWithLifecycle()
     val lastSyncTime by viewModel.lastSyncTime.collectAsStateWithLifecycle()
     val conflictLogs by viewModel.conflictLogs.collectAsStateWithLifecycle()
+    val syncQueueLogs by viewModel.syncQueueLogs.collectAsStateWithLifecycle()
 
     val timerStatus by viewModel.timerStatus.collectAsStateWithLifecycle()
     val remainingSeconds by viewModel.remainingFocusSeconds.collectAsStateWithLifecycle()
@@ -156,247 +159,242 @@ fun SyncTaskAppRoot(viewModel: SyncTaskViewModel) {
     val totalFocusMinutes by viewModel.totalFocusMinutes.collectAsStateWithLifecycle()
     val focusSessions by viewModel.focusSessions.collectAsStateWithLifecycle()
 
-    // Goals & Rewards
     val goals by viewModel.goals.collectAsStateWithLifecycle()
     val userStats by viewModel.userStats.collectAsStateWithLifecycle()
     val rewards by viewModel.rewards.collectAsStateWithLifecycle()
     val celebrationMessage by viewModel.celebrationMessage.collectAsStateWithLifecycle()
     val blastEvent by viewModel.blastEvent.collectAsStateWithLifecycle()
 
-    // Multi-Window & Adaptive Container: Checks available width
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
         val isWideDisplay = maxWidth >= 600.dp
 
-        if (isWideDisplay) {
-            // Tablet, Desktop, or Wide Multi-Window: Side Navigation Rail
-            Row(modifier = Modifier.fillMaxSize().background(DarkBackground)) {
-                NavigationRail(
-                    containerColor = DarkSurface,
-                    contentColor = TextSecondary,
-                    modifier = Modifier.testTag("tablet_navigation_rail")
-                ) {
-                    AppScreen.values().forEach { screen ->
-                        val isSelected = currentScreen == screen
-                        NavigationRailItem(
-                            selected = isSelected,
-                            onClick = { currentScreen = screen },
-                            icon = {
-                                Icon(
-                                    imageVector = if (isSelected) screen.selectedIcon else screen.unselectedIcon,
-                                    contentDescription = screen.title
-                                )
-                            },
-                            label = { Text(screen.title, fontSize = 11.sp) },
-                            colors = NavigationRailItemDefaults.colors(
-                                selectedIconColor = Color.White,
-                                selectedTextColor = Color.White,
-                                indicatorColor = OneUiPrimary.copy(alpha = 0.35f),
-                                unselectedIconColor = TextTertiary,
-                                unselectedTextColor = TextTertiary
-                            ),
-                            modifier = Modifier.testTag("nav_rail_${screen.name.lowercase()}")
-                        )
+        @Composable
+        fun RenderActiveScreen(screen: AppScreen) {
+            when (screen) {
+                AppScreen.TASKS -> TasksScreen(
+                    tasks = filteredTasks,
+                    selectedCategory = selectedCategory,
+                    selectedFilter = selectedFilter,
+                    searchQuery = searchQuery,
+                    isSyncing = isSyncing,
+                    isGoogleConnected = isGoogleConnected,
+                    onCategorySelected = viewModel::setSelectedCategory,
+                    onFilterSelected = viewModel::setSelectedFilter,
+                    onSearchChanged = viewModel::setSearchQuery,
+                    onToggleComplete = viewModel::toggleComplete,
+                    onSnooze = viewModel::snoozeTask,
+                    onDelete = viewModel::deleteTask,
+                    onStartFocus = { id, title ->
+                        viewModel.startFocusSession(25, id, title)
+                        currentScreen = AppScreen.FOCUS
+                    },
+                    onSyncClick = viewModel::triggerSync,
+                    onSaveTask = { title, desc, start, end, prio, cat, rule, reminder ->
+                        viewModel.saveTask(null, title, desc, start, end, prio, cat, rule, reminder)
+                    },
+                    userStats = userStats,
+                    onNavigateToRewards = { currentScreen = AppScreen.GOALS },
+                    onTriggerStreakBlast = { viewModel.triggerTestBlast(BlastType.STREAK_GOAL) },
+                    syncQueueLogs = syncQueueLogs,
+                    onQuickAddNaturalLanguage = viewModel::quickAddFromNaturalLanguage,
+                    onSmartBreakdown = viewModel::generateSmartBreakdown,
+                    onToggleSubtask = viewModel::toggleSubtask,
+                    onAutoResolveConflict = viewModel::autoResolveConflict,
+                    onStartFocusWithDuration = { id, title, mins ->
+                        viewModel.startFocusSession(mins, id, title)
+                        currentScreen = AppScreen.FOCUS
                     }
-                }
+                )
+                AppScreen.CALENDAR -> CalendarScreen(
+                    tasks = allTasks,
+                    isSyncing = isSyncing,
+                    isGoogleConnected = isGoogleConnected,
+                    onSyncClick = viewModel::triggerSync,
+                    onToggleComplete = viewModel::toggleComplete,
+                    onSnooze = viewModel::snoozeTask,
+                    onDelete = viewModel::deleteTask,
+                    onStartFocus = { id, title ->
+                        viewModel.startFocusSession(25, id, title)
+                        currentScreen = AppScreen.FOCUS
+                    },
+                    syncQueueLogs = syncQueueLogs,
+                    onAutoResolveConflict = viewModel::autoResolveConflict,
+                    onRunSimulatedSync = viewModel::runSimulatedGoogleSync,
+                    onSmartBreakdown = viewModel::generateSmartBreakdown,
+                    onToggleSubtask = viewModel::toggleSubtask,
+                    onStartFocusWithDuration = { id, title, mins ->
+                        viewModel.startFocusSession(mins, id, title)
+                        currentScreen = AppScreen.FOCUS
+                    }
+                )
+                AppScreen.FOCUS -> FocusScreen(
+                    timerStatus = timerStatus,
+                    remainingSeconds = remainingSeconds,
+                    totalSeconds = totalSeconds,
+                    currentTaskTitle = currentFocusTaskTitle,
+                    totalFocusMinutes = totalFocusMinutes,
+                    focusSessions = focusSessions,
+                    onStartTimer = { mins, title -> viewModel.startFocusSession(mins, taskTitle = title) },
+                    onPauseTimer = viewModel::pauseFocusSession,
+                    onResumeTimer = viewModel::resumeFocusSession,
+                    onStopTimer = viewModel::stopFocusSession,
+                    tasks = allTasks,
+                    syncQueueLogs = syncQueueLogs,
+                    onStartTimerWithTask = { mins, taskId, title, tag ->
+                        viewModel.startFocusSession(mins, taskId, title, tag)
+                    }
+                )
+                AppScreen.GOALS -> GoalsRewardsScreen(
+                    userStats = userStats,
+                    goals = goals,
+                    rewards = rewards,
+                    celebrationMessage = celebrationMessage,
+                    onClearCelebration = viewModel::clearCelebration,
+                    onRedeemReward = viewModel::redeemReward,
+                    onCreateGoal = viewModel::createGoal,
+                    onCreateCustomReward = viewModel::createCustomReward,
+                    onDeleteGoal = viewModel::deleteGoal,
+                    onTriggerCelebrationBlast = viewModel::triggerTestBlast,
+                    focusSessions = focusSessions,
+                    tasks = allTasks,
+                    syncQueueLogs = syncQueueLogs,
+                    onBuyStreakFreeze = viewModel::buyStreakFreezeShield
+                )
+                AppScreen.SYNC -> SyncSettingsScreen(
+                    authEmail = authEmail,
+                    isGoogleConnected = isGoogleConnected,
+                    isSyncing = isSyncing,
+                    syncMessage = syncMessage,
+                    lastSyncTime = lastSyncTime,
+                    conflictLogs = conflictLogs,
+                    onToggleAccountConnection = viewModel::toggleAccountConnection,
+                    onTriggerSync = viewModel::triggerSync,
+                    syncQueueLogs = syncQueueLogs,
+                    onRunSimulatedSync = viewModel::runSimulatedGoogleSync,
+                    onPurgeDuplicates = viewModel::purgeDuplicatesAndHolidays,
+                    onExportBackupJson = viewModel::exportBackupJson,
+                    onImportBackupJson = viewModel::importBackupJson
+                )
+            }
+        }
 
-                Crossfade(targetState = currentScreen, label = "screen_crossfade") { screen ->
-                    when (screen) {
-                        AppScreen.TASKS -> TasksScreen(
-                            tasks = filteredTasks,
-                            selectedCategory = selectedCategory,
-                            selectedFilter = selectedFilter,
-                            searchQuery = searchQuery,
-                            isSyncing = isSyncing,
-                            isGoogleConnected = isGoogleConnected,
-                            onCategorySelected = viewModel::setSelectedCategory,
-                            onFilterSelected = viewModel::setSelectedFilter,
-                            onSearchChanged = viewModel::setSearchQuery,
-                            onToggleComplete = viewModel::toggleComplete,
-                            onSnooze = viewModel::snoozeTask,
-                            onDelete = viewModel::deleteTask,
-                            onStartFocus = { id, title ->
-                                viewModel.startFocusSession(25, id, title)
-                                currentScreen = AppScreen.FOCUS
-                            },
-                            onSyncClick = viewModel::triggerSync,
-                            onSaveTask = { title, desc, start, end, prio, cat, rule, reminder ->
-                                viewModel.saveTask(null, title, desc, start, end, prio, cat, rule, reminder)
-                            },
-                            userStats = userStats,
-                            onNavigateToRewards = { currentScreen = AppScreen.GOALS },
-                            onTriggerStreakBlast = { viewModel.triggerTestBlast(com.example.model.BlastType.STREAK_GOAL) }
-                        )
-                        AppScreen.CALENDAR -> CalendarScreen(
-                            tasks = allTasks,
-                            isSyncing = isSyncing,
-                            isGoogleConnected = isGoogleConnected,
-                            onSyncClick = viewModel::triggerSync,
-                            onToggleComplete = viewModel::toggleComplete,
-                            onSnooze = viewModel::snoozeTask,
-                            onDelete = viewModel::deleteTask,
-                            onStartFocus = { id, title ->
-                                viewModel.startFocusSession(25, id, title)
-                                currentScreen = AppScreen.FOCUS
-                            }
-                        )
-                        AppScreen.FOCUS -> FocusScreen(
-                            timerStatus = timerStatus,
-                            remainingSeconds = remainingSeconds,
-                            totalSeconds = totalSeconds,
-                            currentTaskTitle = currentFocusTaskTitle,
-                            totalFocusMinutes = totalFocusMinutes,
-                            focusSessions = focusSessions,
-                            onStartTimer = { mins, title -> viewModel.startFocusSession(mins, taskTitle = title) },
-                            onPauseTimer = viewModel::pauseFocusSession,
-                            onResumeTimer = viewModel::resumeFocusSession,
-                            onStopTimer = viewModel::stopFocusSession
-                        )
-                        AppScreen.GOALS -> GoalsRewardsScreen(
-                            userStats = userStats,
-                            goals = goals,
-                            rewards = rewards,
-                            celebrationMessage = celebrationMessage,
-                            onClearCelebration = viewModel::clearCelebration,
-                            onRedeemReward = viewModel::redeemReward,
-                            onCreateGoal = viewModel::createGoal,
-                            onCreateCustomReward = viewModel::createCustomReward,
-                            onDeleteGoal = viewModel::deleteGoal,
-                            onTriggerCelebrationBlast = viewModel::triggerTestBlast
-                        )
-                        AppScreen.SYNC -> SyncSettingsScreen(
-                            authEmail = authEmail,
-                            isGoogleConnected = isGoogleConnected,
-                            isSyncing = isSyncing,
-                            syncMessage = syncMessage,
-                            lastSyncTime = lastSyncTime,
-                            conflictLogs = conflictLogs,
-                            onToggleAccountConnection = viewModel::toggleAccountConnection,
-                            onTriggerSync = viewModel::triggerSync
-                        )
+        if (isWideDisplay) {
+            com.example.ui.theme.AeroGlassBackdrop(modifier = Modifier.fillMaxSize()) {
+                Row(modifier = Modifier.fillMaxSize()) {
+                    NavigationRail(
+                        containerColor = DarkSurface.copy(alpha = 0.88f),
+                        contentColor = TextSecondary,
+                        modifier = Modifier.testTag("tablet_navigation_rail")
+                    ) {
+                        AppScreen.values().forEach { screen ->
+                            val isSelected = currentScreen == screen
+                            NavigationRailItem(
+                                selected = isSelected,
+                                onClick = { currentScreen = screen },
+                                icon = {
+                                    Box(
+                                        modifier = if (isSelected) {
+                                            Modifier
+                                                .size(42.dp)
+                                                .clip(RoundedCornerShape(13.dp))
+                                                .background(com.example.ui.theme.aeroActionBrush())
+                                        } else {
+                                            Modifier.size(36.dp)
+                                        },
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = if (isSelected) screen.selectedIcon else screen.unselectedIcon,
+                                            contentDescription = screen.title,
+                                            tint = if (isSelected) Color.White else TextTertiary
+                                        )
+                                    }
+                                },
+                                label = { Text(screen.title, fontSize = 11.sp) },
+                                colors = NavigationRailItemDefaults.colors(
+                                    selectedIconColor = Color.White,
+                                    selectedTextColor = Color.White,
+                                    indicatorColor = Color.Transparent,
+                                    unselectedIconColor = TextTertiary,
+                                    unselectedTextColor = TextTertiary
+                                ),
+                                modifier = Modifier.testTag("nav_rail_${screen.name.lowercase()}")
+                            )
+                        }
+                    }
+
+                    Crossfade(targetState = currentScreen, label = "screen_crossfade") { screen ->
+                        RenderActiveScreen(screen)
                     }
                 }
             }
         } else {
-            // Handheld / Compact Portrait Layout: Bottom Navigation Bar
-            Scaffold(
-                containerColor = DarkBackground,
-                bottomBar = {
-                    NavigationBar(
-                        containerColor = DarkSurface,
-                        contentColor = TextSecondary,
-                        modifier = Modifier.testTag("bottom_navigation_bar"),
-                        tonalElevation = 8.dp
-                    ) {
-                        AppScreen.values().forEach { screen ->
-                            val isSelected = currentScreen == screen
-                            NavigationBarItem(
-                                selected = isSelected,
-                                onClick = { currentScreen = screen },
-                                icon = {
-                                    Icon(
-                                        imageVector = if (isSelected) screen.selectedIcon else screen.unselectedIcon,
-                                        contentDescription = screen.title,
-                                        modifier = Modifier.size(22.dp)
-                                    )
-                                },
-                                label = { Text(screen.title, fontSize = 11.sp, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal) },
-                                colors = NavigationBarItemDefaults.colors(
-                                    selectedIconColor = Color.White,
-                                    selectedTextColor = Color.White,
-                                    indicatorColor = OneUiPrimary.copy(alpha = 0.35f),
-                                    unselectedIconColor = TextTertiary,
-                                    unselectedTextColor = TextTertiary
-                                ),
-                                modifier = Modifier.testTag("nav_item_${screen.name.lowercase()}")
-                            )
+            com.example.ui.theme.AeroGlassBackdrop(modifier = Modifier.fillMaxSize()) {
+                Scaffold(
+                    containerColor = Color.Transparent,
+                    bottomBar = {
+                        NavigationBar(
+                            containerColor = DarkSurface.copy(alpha = 0.90f),
+                            contentColor = TextSecondary,
+                            modifier = Modifier.testTag("bottom_navigation_bar"),
+                            tonalElevation = 10.dp
+                        ) {
+                            AppScreen.values().forEach { screen ->
+                                val isSelected = currentScreen == screen
+                                NavigationBarItem(
+                                    selected = isSelected,
+                                    onClick = { currentScreen = screen },
+                                    icon = {
+                                        Box(
+                                            modifier = if (isSelected) {
+                                                Modifier
+                                                    .size(40.dp)
+                                                    .clip(RoundedCornerShape(12.dp))
+                                                    .background(com.example.ui.theme.aeroActionBrush())
+                                            } else {
+                                                Modifier.size(32.dp)
+                                            },
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Icon(
+                                                imageVector = if (isSelected) screen.selectedIcon else screen.unselectedIcon,
+                                                contentDescription = screen.title,
+                                                tint = if (isSelected) Color.White else TextTertiary,
+                                                modifier = Modifier.size(21.dp)
+                                            )
+                                        }
+                                    },
+                                    label = {
+                                        Text(
+                                            screen.title,
+                                            fontSize = 10.5.sp,
+                                            fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.Normal
+                                        )
+                                    },
+                                    colors = NavigationBarItemDefaults.colors(
+                                        selectedIconColor = Color.White,
+                                        selectedTextColor = com.example.ui.theme.OneUiSecondary,
+                                        indicatorColor = Color.Transparent,
+                                        unselectedIconColor = TextTertiary,
+                                        unselectedTextColor = TextTertiary
+                                    ),
+                                    modifier = Modifier.testTag("nav_item_${screen.name.lowercase()}")
+                                )
+                            }
                         }
                     }
-                }
-            ) { paddingValues ->
-                Crossfade(
-                    targetState = currentScreen,
-                    modifier = Modifier.padding(paddingValues),
-                    label = "screen_crossfade"
-                ) { screen ->
-                    when (screen) {
-                        AppScreen.TASKS -> TasksScreen(
-                            tasks = filteredTasks,
-                            selectedCategory = selectedCategory,
-                            selectedFilter = selectedFilter,
-                            searchQuery = searchQuery,
-                            isSyncing = isSyncing,
-                            isGoogleConnected = isGoogleConnected,
-                            onCategorySelected = viewModel::setSelectedCategory,
-                            onFilterSelected = viewModel::setSelectedFilter,
-                            onSearchChanged = viewModel::setSearchQuery,
-                            onToggleComplete = viewModel::toggleComplete,
-                            onSnooze = viewModel::snoozeTask,
-                            onDelete = viewModel::deleteTask,
-                            onStartFocus = { id, title ->
-                                viewModel.startFocusSession(25, id, title)
-                                currentScreen = AppScreen.FOCUS
-                            },
-                            onSyncClick = viewModel::triggerSync,
-                            onSaveTask = { title, desc, start, end, prio, cat, rule, reminder ->
-                                viewModel.saveTask(null, title, desc, start, end, prio, cat, rule, reminder)
-                            },
-                            userStats = userStats,
-                            onNavigateToRewards = { currentScreen = AppScreen.GOALS },
-                            onTriggerStreakBlast = { viewModel.triggerTestBlast(com.example.model.BlastType.STREAK_GOAL) }
-                        )
-                        AppScreen.CALENDAR -> CalendarScreen(
-                            tasks = allTasks,
-                            isSyncing = isSyncing,
-                            isGoogleConnected = isGoogleConnected,
-                            onSyncClick = viewModel::triggerSync,
-                            onToggleComplete = viewModel::toggleComplete,
-                            onSnooze = viewModel::snoozeTask,
-                            onDelete = viewModel::deleteTask,
-                            onStartFocus = { id, title ->
-                                viewModel.startFocusSession(25, id, title)
-                                currentScreen = AppScreen.FOCUS
-                            }
-                        )
-                        AppScreen.FOCUS -> FocusScreen(
-                            timerStatus = timerStatus,
-                            remainingSeconds = remainingSeconds,
-                            totalSeconds = totalSeconds,
-                            currentTaskTitle = currentFocusTaskTitle,
-                            totalFocusMinutes = totalFocusMinutes,
-                            focusSessions = focusSessions,
-                            onStartTimer = { mins, title -> viewModel.startFocusSession(mins, taskTitle = title) },
-                            onPauseTimer = viewModel::pauseFocusSession,
-                            onResumeTimer = viewModel::resumeFocusSession,
-                            onStopTimer = viewModel::stopFocusSession
-                        )
-                        AppScreen.GOALS -> GoalsRewardsScreen(
-                            userStats = userStats,
-                            goals = goals,
-                            rewards = rewards,
-                            celebrationMessage = celebrationMessage,
-                            onClearCelebration = viewModel::clearCelebration,
-                            onRedeemReward = viewModel::redeemReward,
-                            onCreateGoal = viewModel::createGoal,
-                            onCreateCustomReward = viewModel::createCustomReward,
-                            onDeleteGoal = viewModel::deleteGoal,
-                            onTriggerCelebrationBlast = viewModel::triggerTestBlast
-                        )
-                        AppScreen.SYNC -> SyncSettingsScreen(
-                            authEmail = authEmail,
-                            isGoogleConnected = isGoogleConnected,
-                            isSyncing = isSyncing,
-                            syncMessage = syncMessage,
-                            lastSyncTime = lastSyncTime,
-                            conflictLogs = conflictLogs,
-                            onToggleAccountConnection = viewModel::toggleAccountConnection,
-                            onTriggerSync = viewModel::triggerSync
-                        )
+                ) { paddingValues ->
+                    Crossfade(
+                        targetState = currentScreen,
+                        modifier = Modifier.padding(paddingValues),
+                        label = "screen_crossfade"
+                    ) { screen ->
+                        RenderActiveScreen(screen)
                     }
                 }
             }
         }
 
-        // 3. Celebratory Particle Blast Overlay
         ParticleBlastOverlay(
             blastEvent = blastEvent,
             onDismiss = viewModel::clearBlast

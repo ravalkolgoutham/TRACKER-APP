@@ -1,120 +1,198 @@
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
     android:width="320dp"
     android:height="140dp"
     android:viewportWidth="320"
     android:viewportHeight="140">
 
-    <!-- Subtle background rounded obsidian card -->
+    <!-- Aero Cobalt Frosted Glass Card Base -->
     <path
-        android:fillColor="#0D0D0D"
-        android:pathData="M 16,10 C 16,10 304,10 304,10 C 312,10 318,16 318,24 C 318,24 318,116 318,116 C 318,124 312,130 304,130 C 304,130 16,130 16,130 C 8,130 2,124 2,116 C 2,116 2,24 2,24 C 2,16 8,10 16,10 Z" />
+        android:pathData="M 16,8 C 16,8 304,8 304,8 C 312,8 318,14 318,22 C 318,22 318,118 318,118 C 318,126 312,132 304,132 C 304,132 16,132 16,132 C 8,132 2,126 2,118 C 2,118 2,22 2,22 C 2,14 8,8 16,8 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="0"
+                android:startY="0"
+                android:endX="320"
+                android:endY="140"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#FF1E293B" />
+                <item android:offset="0.5" android:color="#FF192338" />
+                <item android:offset="1.0" android:color="#FF232B4A" />
+            </gradient>
+        </aapt:attr>
+    </path>
 
-    <!-- Ambient glowing decorative circular dark gradients -->
+    <!-- Specular Glass Border Outline -->
     <path
-        android:fillColor="#1A1A1A"
-        android:pathData="M 70,70 m -50,0 a 50,50 0 1,0 100,0 a 50,50 0 1,0 -100,0" />
+        android:fillColor="#00000000"
+        android:strokeColor="#5534C8E8"
+        android:strokeWidth="1.5"
+        android:pathData="M 16,8 C 16,8 304,8 304,8 C 312,8 318,14 318,22 C 318,22 318,118 318,118 C 318,126 312,132 304,132 C 304,132 16,132 16,132 C 8,132 2,126 2,118 C 2,118 2,22 2,22 C 2,14 8,8 16,8 Z" />
+
+    <!-- Ambient Electric Cyan & Royal Cobalt Glowing Orbs -->
+    <path
+        android:fillColor="#2834C8E8"
+        android:pathData="M 70,70 m -54,0 a 54,54 0 1,0 108,0 a 54,54 0 1,0 -108,0" />
+    <path
+        android:fillColor="#1E34C8E8"
+        android:pathData="M 70,70 m -38,0 a 38,38 0 1,0 76,0 a 38,38 0 1,0 -76,0" />
 
     <path
-        android:fillColor="#141414"
-        android:pathData="M 250,70 m -45,0 a 45,45 0 1,0 90,0 a 45,45 0 1,0 -90,0" />
+        android:fillColor="#2E4B4CED"
+        android:pathData="M 250,70 m -50,0 a 50,50 0 1,0 100,0 a 50,50 0 1,0 -100,0" />
+    <path
+        android:fillColor="#2438BDF8"
+        android:pathData="M 160,70 m -34,0 a 34,34 0 1,0 68,0 a 34,34 0 1,0 -68,0" />
 
-    <!-- Center Left: Calendar Pad -->
+    <!-- Center Left: Aero Glass Calendar Pad -->
     <!-- Calendar Body -->
     <path
-        android:fillColor="#161616"
-        android:strokeColor="#FFFFFF"
-        android:strokeWidth="1.5"
+        android:fillColor="#FF22304A"
+        android:strokeColor="#FF34C8E8"
+        android:strokeWidth="1.8"
         android:pathData="M 40,36 h 60 c 6,0 10,4 10,10 v 62 c 0,6 -4,10 -10,10 h -60 c -6,0 -10,-4 -10,-10 v -62 c 0,-6 4,-10 10,-10 Z" />
 
-    <!-- Calendar Header banner -->
+    <!-- Calendar Header Banner (Royal Cobalt to Cyan Gradient) -->
     <path
-        android:fillColor="#262626"
-        android:pathData="M 40,36 h 60 c 6,0 10,4 10,10 v 14 h -80 v -14 c 0,-6 4,-10 10,-10 Z" />
+        android:pathData="M 40,36 h 60 c 6,0 10,4 10,10 v 15 h -80 v -15 c 0,-6 4,-10 10,-10 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="30"
+                android:startY="36"
+                android:endX="110"
+                android:endY="61"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#FF4B4CED" />
+                <item android:offset="1.0" android:color="#FF34C8E8" />
+            </gradient>
+        </aapt:attr>
+    </path>
 
-    <!-- Calendar Rings -->
+    <!-- Calendar Top Binding Rings in Luminous Ice Cyan -->
     <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M 50,30 h 4 v 12 h -4 Z M 86,30 h 4 v 12 h -4 Z" />
+        android:fillColor="#FF7DD3FC"
+        android:pathData="M 50,29 h 4.5 v 13 h -4.5 Z M 85.5,29 h 4.5 v 13 h -4.5 Z" />
 
-    <!-- Calendar Day Grid dots -->
+    <!-- Calendar Day Grid Dots (Multi-color vibrant task blocks) -->
+    <!-- Row 1: Cyan & Indigo -->
     <path
-        android:fillColor="#555555"
-        android:pathData="M 48,70 h 6 v 6 h -6 Z M 64,70 h 6 v 6 h -6 Z M 80,70 h 6 v 6 h -6 Z M 48,84 h 6 v 6 h -6 Z M 64,84 h 6 v 6 h -6 Z M 80,84 h 6 v 6 h -6 Z M 48,98 h 6 v 6 h -6 Z" />
+        android:fillColor="#FF34C8E8"
+        android:pathData="M 47,69 h 7 v 7 h -7 Z M 63.5,69 h 7 v 7 h -7 Z" />
     <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M 64,98 h 6 v 6 h -6 Z M 80,98 h 6 v 6 h -6 Z" />
+        android:fillColor="#FF818CF8"
+        android:pathData="M 80,69 h 7 v 7 h -7 Z" />
+
+    <!-- Row 2: Emerald, Amber, Cyan -->
+    <path
+        android:fillColor="#FF10B981"
+        android:pathData="M 47,83 h 7 v 7 h -7 Z" />
+    <path
+        android:fillColor="#FFF59E0B"
+        android:pathData="M 63.5,83 h 7 v 7 h -7 Z" />
+    <path
+        android:fillColor="#FF38BDF8"
+        android:pathData="M 80,83 h 7 v 7 h -7 Z" />
+
+    <!-- Row 3: Rose Coral & Glowing Ice White/Cyan active slots -->
+    <path
+        android:fillColor="#FFF43F5E"
+        android:pathData="M 47,97 h 7 v 7 h -7 Z" />
+    <path
+        android:fillColor="#FF67E8F9"
+        android:pathData="M 63.5,97 h 7 v 7 h -7 Z M 80,97 h 7 v 7 h -7 Z" />
 
     <!-- Central Sync Orbit Rings & Arrows -->
+    <!-- Upper Sync Arc (Electric Sky Cyan) -->
     <path
         android:fillColor="#00000000"
-        android:strokeColor="#FFFFFF"
-        android:strokeWidth="1.5"
+        android:strokeColor="#FF34C8E8"
+        android:strokeWidth="2.2"
         android:strokeLineCap="round"
-        android:pathData="M 130,55 C 145,40 175,40 190,55" />
+        android:pathData="M 128,54 C 145,37 175,37 192,54" />
     <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M 190,55 L 180,50 L 184,58 Z" />
+        android:fillColor="#FF34C8E8"
+        android:pathData="M 193,55 L 181,49 L 185,59 Z" />
 
+    <!-- Lower Sync Arc (Luminous Indigo-Violet) -->
     <path
         android:fillColor="#00000000"
-        android:strokeColor="#888888"
-        android:strokeWidth="1.5"
+        android:strokeColor="#FF818CF8"
+        android:strokeWidth="2.2"
         android:strokeLineCap="round"
-        android:pathData="M 190,85 C 175,100 145,100 130,85" />
+        android:pathData="M 192,86 C 175,103 145,103 128,86" />
     <path
-        android:fillColor="#888888"
-        android:pathData="M 130,85 L 140,90 L 136,82 Z" />
+        android:fillColor="#FF818CF8"
+        android:pathData="M 127,85 L 139,91 L 135,81 Z" />
 
-    <!-- Center Floating Checkmark Badge -->
+    <!-- Center Floating Aero Checkmark Badge -->
+    <!-- Outer Halo -->
     <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M 160,70 m -16,0 a 16,16 0 1,0 32,0 a 16,16 0 1,0 -32,0" />
+        android:fillColor="#4034C8E8"
+        android:pathData="M 160,70 m -22,0 a 22,22 0 1,0 44,0 a 22,22 0 1,0 -44,0" />
+    <!-- Gradient Orb -->
+    <path
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="1.5"
+        android:pathData="M 160,70 m -16.5,0 a 16.5,16.5 0 1,0 33,0 a 16.5,16.5 0 1,0 -33,0">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="144"
+                android:startY="54"
+                android:endX="176"
+                android:endY="86"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#FF34C8E8" />
+                <item android:offset="1.0" android:color="#FF4B4CED" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <!-- Crisp White Checkmark -->
     <path
         android:fillColor="#00000000"
-        android:strokeColor="#000000"
+        android:strokeColor="#FFFFFFFF"
         android:strokeWidth="3.5"
         android:strokeLineCap="round"
         android:strokeLineJoin="round"
-        android:pathData="M 152,70 L 158,76 L 169,64" />
+        android:pathData="M 152,70 L 157.5,75.5 L 168.5,64" />
 
-    <!-- Right Side: Floating Task Cards -->
-    <!-- Card 1 -->
+    <!-- Right Side: Floating Frosted Task Cards -->
+    <!-- Card 1 (Top Right - Cyan/Emerald Accent) -->
     <path
-        android:fillColor="#161616"
-        android:strokeColor="#333333"
-        android:strokeWidth="1.5"
-        android:pathData="M 215,36 h 75 c 5,0 8,3 8,8 v 20 c 0,5 -3,8 -8,8 h -75 c -5,0 -8,-3 -8,-8 v -20 c 0,-5 3,-8 8,-8 Z" />
+        android:fillColor="#FF23324E"
+        android:strokeColor="#FF34C8E8"
+        android:strokeWidth="1.6"
+        android:pathData="M 215,34 h 75 c 5,0 8,3 8,8 v 21 c 0,5 -3,8 -8,8 h -75 c -5,0 -8,-3 -8,-8 v -21 c 0,-5 3,-8 8,-8 Z" />
     <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M 217,54 m -4,0 a 4,4 0 1,0 8,0 a 4,4 0 1,0 -8,0" />
+        android:fillColor="#FF10B981"
+        android:pathData="M 218,52.5 m -4.5,0 a 4.5,4.5 0 1,0 9,0 a 4.5,4.5 0 1,0 -9,0" />
     <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M 228,48 h 45 v 3 h -45 Z" />
+        android:fillColor="#FFF8FAFC"
+        android:pathData="M 229,46.5 h 48 v 3.5 h -48 Z" />
     <path
-        android:fillColor="#666666"
-        android:pathData="M 228,56 h 30 v 2.5 h -30 Z" />
+        android:fillColor="#FF38BDF8"
+        android:pathData="M 229,54.5 h 32 v 3 h -32 Z" />
 
-    <!-- Card 2 -->
+    <!-- Card 2 (Bottom Right - Cobalt/Amber Accent) -->
     <path
-        android:fillColor="#1A1A1A"
-        android:strokeColor="#FFFFFF"
-        android:strokeWidth="1.5"
-        android:pathData="M 215,82 h 75 c 5,0 8,3 8,8 v 20 c 0,5 -3,8 -8,8 h -75 c -5,0 -8,-3 -8,-8 v -20 c 0,-5 3,-8 8,-8 Z" />
+        android:fillColor="#FF262F4D"
+        android:strokeColor="#FF818CF8"
+        android:strokeWidth="1.6"
+        android:pathData="M 215,82 h 75 c 5,0 8,3 8,8 v 21 c 0,5 -3,8 -8,8 h -75 c -5,0 -8,-3 -8,-8 v -21 c 0,-5 3,-8 8,-8 Z" />
     <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M 217,100 m -4,0 a 4,4 0 1,0 8,0 a 4,4 0 1,0 -8,0" />
+        android:fillColor="#FFF59E0B"
+        android:pathData="M 218,100.5 m -4.5,0 a 4.5,4.5 0 1,0 9,0 a 4.5,4.5 0 1,0 -9,0" />
     <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M 228,94 h 38 v 3 h -38 Z" />
+        android:fillColor="#FFF8FAFC"
+        android:pathData="M 229,94.5 h 42 v 3.5 h -42 Z" />
     <path
-        android:fillColor="#777777"
-        android:pathData="M 228,102 h 25 v 2.5 h -25 Z" />
+        android:fillColor="#FFA78BFA"
+        android:pathData="M 229,102.5 h 27 v 3 h -27 Z" />
 
-    <!-- Sparkling stars -->
+    <!-- Sparkling Aero Stars -->
     <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M 125,28 L 126.5,33 L 131,34.5 L 126.5,36 L 125,41 L 123.5,36 L 119,34.5 L 123.5,33 Z" />
+        android:fillColor="#FFFBBF24"
+        android:pathData="M 125,26 L 126.8,31.5 L 132,33.2 L 126.8,35 L 125,40.5 L 123.2,35 L 118,33.2 L 123.2,31.5 Z" />
     <path
-        android:fillColor="#888888"
-        android:pathData="M 200,118 L 201,121 L 204,122 L 201,123 L 200,126 L 199,123 L 196,122 L 199,121 Z" />
+        android:fillColor="#FF34C8E8"
+        android:pathData="M 200,115 L 201.4,118.8 L 205,120 L 201.4,121.2 L 200,125 L 198.6,121.2 L 195,120 L 198.6,118.8 Z" />
 </vector>

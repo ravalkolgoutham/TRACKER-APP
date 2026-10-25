@@ -1,32 +1,175 @@
 package com.example.ui.theme
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 
-// Rich Modern Dark Backgrounds with deep slate elegance
-val DarkBackground = Color(0xFF0B0F19)          // Deep Midnight Slate
-val DarkSurface = Color(0xFF131B2E)             // Rich Navy Slate Surface
-val DarkSurfaceElevated = Color(0xFF1E293B)     // Elevated Slate Card
-val DarkSurfaceVariant = Color(0xFF28354D)      // Interactive Accent Surface
-val DarkBorder = Color(0xFF334155)              // Refined Slate Border
-val DarkBorderSubtle = Color(0xFF1E293B)        // Subtle Border
+enum class AppThemePreset(
+    val id: String,
+    val title: String,
+    val subtitle: String,
+    val bg: Color,
+    val surface: Color,
+    val surfaceElevated: Color,
+    val border: Color,
+    val primary: Color,
+    val primaryLight: Color,
+    val secondary: Color,
+    val accent: Color
+) {
+    AERO_COBALT_GLASS(
+        id = "aero_cobalt",
+        title = "Aero Cobalt Glass",
+        subtitle = "Deep Slate Navy • Electric Sky Cyan & Royal Cobalt Wing",
+        bg = Color(0xFF181E29),
+        surface = Color(0xFF222B3B),
+        surfaceElevated = Color(0xFF2B364B),
+        border = Color(0xFF45587A),
+        primary = Color(0xFF4B4CED),
+        primaryLight = Color(0xFF689BFF),
+        secondary = Color(0xFF34C8E8),
+        accent = Color(0xFF38B6FF)
+    ),
+    COSMIC_VIOLET(
+        id = "cosmic_violet",
+        title = "Cosmic Violet Neon",
+        subtitle = "Royal Indigo • Electric Violet & Cyber Aqua",
+        bg = Color(0xFF0A0D20),
+        surface = Color(0xFF141834),
+        surfaceElevated = Color(0xFF1E244B),
+        border = Color(0xFF3A4382),
+        primary = Color(0xFF7C4DFF),
+        primaryLight = Color(0xFFB388FF),
+        secondary = Color(0xFF00E5FF),
+        accent = Color(0xFFFF4081)
+    ),
+    EMERALD_CYBER(
+        id = "emerald_cyber",
+        title = "Emerald Cyber Glass",
+        subtitle = "Obsidian Teal • Neon Mint & Glacial Cyan",
+        bg = Color(0xFF0E191F),
+        surface = Color(0xFF162730),
+        surfaceElevated = Color(0xFF1F3642),
+        border = Color(0xFF355C6E),
+        primary = Color(0xFF00BFA5),
+        primaryLight = Color(0xFF64FFDA),
+        secondary = Color(0xFF00E676),
+        accent = Color(0xFF00E5FF)
+    ),
+    SUNSET_QUARTZ(
+        id = "sunset_quartz",
+        title = "Sunset Rose Quartz",
+        subtitle = "Velvet Plum • Coral Magenta & Solar Amber",
+        bg = Color(0xFF1A1221),
+        surface = Color(0xFF281B33),
+        surfaceElevated = Color(0xFF362546),
+        border = Color(0xFF63437D),
+        primary = Color(0xFFFF4081),
+        primaryLight = Color(0xFFFF80AB),
+        secondary = Color(0xFFFFAB00),
+        accent = Color(0xFFE040FB)
+    ),
+    AMOLED_ICE(
+        id = "amoled_ice",
+        title = "AMOLED Midnight Ice",
+        subtitle = "True Pitch Black • Crystal Cyan & Sapphire",
+        bg = Color(0xFF05070C),
+        surface = Color(0xFF101522),
+        surfaceElevated = Color(0xFF182034),
+        border = Color(0xFF2E3F66),
+        primary = Color(0xFF2979FF),
+        primaryLight = Color(0xFF82B1FF),
+        secondary = Color(0xFF00E5FF),
+        accent = Color(0xFF00E676)
+    )
+}
 
-// Vibrant Dynamic Color Palette
-val OneUiPrimary = Color(0xFF6366F1)            // Vibrant Electric Indigo
-val OneUiPrimaryLight = Color(0xFF818CF8)       // Luminous Violet
-val OneUiSecondary = Color(0xFF38BDF8)          // Radiant Sky Cyan
-val OneUiAccent = Color(0xFFA855F7)             // Vivid Purple
-val OneUiSuccess = Color(0xFF10B981)            // Emerald Green (Tasks Done, Streaks)
-val OneUiWarning = Color(0xFFF59E0B)            // Warm Amber Gold (Streak Flame, Pending)
-val OneUiError = Color(0xFFEF4444)              // Vibrant Rose Red (Urgent, Overdue)
+object ThemeManager {
+    var currentPreset by mutableStateOf(AppThemePreset.AERO_COBALT_GLASS)
+    var glassAlpha by mutableFloatStateOf(0.74f)
+    var showDiagonalBackdrop by mutableStateOf(true)
+    var enableSpecularRim by mutableStateOf(true)
+    var useDynamicSystemColors by mutableStateOf(false)
 
-// Typography Text Hierarchy
-val TextPrimary = Color(0xFFF8FAFC)             // Brilliant Crisp White
-val TextSecondary = Color(0xFF94A3B8)           // Slate Gray
-val TextTertiary = Color(0xFF64748B)            // Muted Charcoal Slate
+    fun applyPreset(preset: AppThemePreset) {
+        currentPreset = preset
+        DarkBackground = preset.bg
+        DarkSurface = preset.surface
+        DarkSurfaceElevated = preset.surfaceElevated
+        DarkBorder = preset.border
+        OneUiPrimary = preset.primary
+        OneUiPrimaryLight = preset.primaryLight
+        OneUiSecondary = preset.secondary
+        OneUiAccent = preset.accent
+    }
+}
 
-// Vibrant Category Colors
-val CategoryWork = Color(0xFF3B82F6)            // Electric Blue
-val CategoryPersonal = Color(0xFF10B981)        // Emerald Green
-val CategoryFocus = Color(0xFFA855F7)           // Vivid Purple
-val CategoryHealth = Color(0xFFF43F5E)          // Bright Coral Rose
-val CategoryMeeting = Color(0xFFF59E0B)         // Radiant Amber
+// Reactive Theme Tokens (backed by Compose MutableState so every screen updates immediately)
+var DarkBackground by mutableStateOf(AppThemePreset.AERO_COBALT_GLASS.bg)
+var DarkSurface by mutableStateOf(AppThemePreset.AERO_COBALT_GLASS.surface)
+var DarkSurfaceElevated by mutableStateOf(AppThemePreset.AERO_COBALT_GLASS.surfaceElevated)
+var DarkSurfaceVariant by mutableStateOf(Color(0xFF323F59))
+var DarkBorder by mutableStateOf(AppThemePreset.AERO_COBALT_GLASS.border)
+var DarkBorderSubtle by mutableStateOf(Color(0xFF263147))
+
+var OneUiPrimary by mutableStateOf(AppThemePreset.AERO_COBALT_GLASS.primary)
+var OneUiPrimaryLight by mutableStateOf(AppThemePreset.AERO_COBALT_GLASS.primaryLight)
+var OneUiSecondary by mutableStateOf(AppThemePreset.AERO_COBALT_GLASS.secondary)
+var OneUiAccent by mutableStateOf(AppThemePreset.AERO_COBALT_GLASS.accent)
+
+val OneUiSuccess = Color(0xFF00E676)
+val OneUiWarning = Color(0xFFFFAB00)
+val OneUiError = Color(0xFFFF5252)
+
+// Typography Text Hierarchy with Crisp Contrast
+val TextPrimary = Color(0xFFF8FAFF)
+val TextSecondary = Color(0xFFB8C6E0)
+val TextTertiary = Color(0xFF7B8DB0)
+
+// High-Saturation Category Accents
+val CategoryWork = Color(0xFF38B6FF)
+val CategoryPersonal = Color(0xFF00E676)
+val CategoryFocus = Color(0xFF7C4DFF)
+val CategoryHealth = Color(0xFFFF4081)
+val CategoryMeeting = Color(0xFFFFAB00)
+
+// Glassmorphic & Action Gradient Helpers matching the reference UI
+fun aeroActionBrush(): Brush = Brush.linearGradient(
+    colors = listOf(OneUiSecondary, OneUiPrimary),
+    start = Offset(0f, 0f),
+    end = Offset(240f, 240f)
+)
+
+fun glassSurfaceBrush(alphaMultiplier: Float = 1f): Brush {
+    val alpha = (ThemeManager.glassAlpha * alphaMultiplier).coerceIn(0.35f, 0.96f)
+    return Brush.linearGradient(
+        colors = listOf(
+            DarkSurfaceElevated.copy(alpha = alpha),
+            DarkSurface.copy(alpha = (alpha + 0.08f).coerceAtMost(0.98f))
+        ),
+        start = Offset(0f, 0f),
+        end = Offset(400f, 500f)
+    )
+}
+
+fun glassSpecularBorderBrush(accent: Color = OneUiSecondary): Brush {
+    return if (ThemeManager.enableSpecularRim) {
+        Brush.linearGradient(
+            colors = listOf(
+                Color.White.copy(alpha = 0.42f),
+                accent.copy(alpha = 0.38f),
+                DarkBorder.copy(alpha = 0.25f)
+            ),
+            start = Offset(0f, 0f),
+            end = Offset(350f, 350f)
+        )
+    } else {
+        Brush.linearGradient(
+            colors = listOf(DarkBorder, DarkBorder)
+        )
+    }
+}

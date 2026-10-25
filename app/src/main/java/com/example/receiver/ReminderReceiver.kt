@@ -118,6 +118,11 @@ class ReminderReceiver : BroadcastReceiver() {
         notificationManager.cancel(taskId.hashCode())
 
         CoroutineScope(Dispatchers.IO).launch {
+            val app = context.applicationContext as? com.example.SyncTaskApp
+            if (app != null) {
+                app.repository.toggleTaskComplete(taskId)
+                return@launch
+            }
             val db = AppDatabase.getDatabase(context)
             val taskEntity = db.taskDao().getTaskById(taskId)
             if (taskEntity != null) {
@@ -153,9 +158,13 @@ class ReminderReceiver : BroadcastReceiver() {
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.cancel(taskId.hashCode())
 
-        val snoozeTime = System.currentTimeMillis() + (10 * 60 * 1000L) // 10 minutes
-
         CoroutineScope(Dispatchers.IO).launch {
+            val app = context.applicationContext as? com.example.SyncTaskApp
+            if (app != null) {
+                app.repository.snoozeTask(taskId, 10)
+                return@launch
+            }
+            val snoozeTime = System.currentTimeMillis() + (10 * 60 * 1000L) // 10 minutes
             val db = AppDatabase.getDatabase(context)
             val taskEntity = db.taskDao().getTaskById(taskId)
             if (taskEntity != null) {

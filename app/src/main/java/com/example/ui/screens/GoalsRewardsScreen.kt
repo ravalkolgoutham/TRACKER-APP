@@ -3,13 +3,14 @@ package com.example.ui.screens
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.Image
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -34,6 +35,7 @@ import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.Park
+import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.SportsEsports
 import androidx.compose.material.icons.filled.Stars
 import androidx.compose.material3.Button
@@ -54,15 +56,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.R
 import com.example.model.BlastType
+import com.example.model.FocusSession
 import com.example.model.GoalItem
 import com.example.model.RewardItem
+import com.example.model.SyncQueueItem
+import com.example.model.TaskItem
 import com.example.model.UserRewardStats
+import com.example.model.toLocalIsoDate
 import com.example.ui.components.CreateGoalDialog
 import com.example.ui.components.CreateRewardDialog
 import com.example.ui.components.OneUiHeader
@@ -71,8 +75,6 @@ import com.example.ui.theme.DarkBackground
 import com.example.ui.theme.DarkBorder
 import com.example.ui.theme.DarkSurface
 import com.example.ui.theme.DarkSurfaceElevated
-import com.example.ui.theme.OneUiAccent
-import com.example.ui.theme.OneUiError
 import com.example.ui.theme.OneUiPrimary
 import com.example.ui.theme.OneUiPrimaryLight
 import com.example.ui.theme.OneUiSecondary
@@ -82,6 +84,7 @@ import com.example.ui.theme.TextPrimary
 import com.example.ui.theme.TextSecondary
 import com.example.ui.theme.TextTertiary
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun GoalsRewardsScreen(
     userStats: UserRewardStats,
@@ -94,7 +97,11 @@ fun GoalsRewardsScreen(
     onCreateCustomReward: (title: String, description: String, costPoints: Int, iconCategory: String) -> Unit,
     onDeleteGoal: (String) -> Unit,
     modifier: Modifier = Modifier,
-    onTriggerCelebrationBlast: ((BlastType) -> Unit)? = null
+    onTriggerCelebrationBlast: ((BlastType) -> Unit)? = null,
+    focusSessions: List<FocusSession> = emptyList(),
+    tasks: List<TaskItem> = emptyList(),
+    syncQueueLogs: List<SyncQueueItem> = emptyList(),
+    onBuyStreakFreeze: (() -> Unit)? = null
 ) {
     var showCreateGoalDialog by remember { mutableStateOf(false) }
     var showCreateRewardDialog by remember { mutableStateOf(false) }
@@ -102,15 +109,15 @@ fun GoalsRewardsScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(DarkBackground)
             .verticalScroll(rememberScrollState())
     ) {
         OneUiHeader(
             title = "Goals & Rewards",
-            subtitle = "Earn XP and unlock real-life rewards for completing events and tasks",
+            subtitle = "Timezone-Safe Streak Engine • XP Levels • Unlockable Perks",
             isSyncing = false,
             isGoogleConnected = true,
-            onSyncClick = {}
+            onSyncClick = {},
+            syncQueueLogs = syncQueueLogs
         )
 
         Spacer(modifier = Modifier.height(18.dp))
@@ -133,8 +140,8 @@ fun GoalsRewardsScreen(
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(18.dp))
                             .testTag("celebration_banner"),
-                        color = Color(0xFF1E1E1E),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, Color.White)
+                        color = DarkSurfaceElevated,
+                        border = BorderStroke(1.dp, OneUiSecondary)
                     ) {
                         Row(
                             modifier = Modifier
@@ -150,7 +157,7 @@ fun GoalsRewardsScreen(
                                 Icon(
                                     imageVector = Icons.Default.Stars,
                                     contentDescription = null,
-                                    tint = Color.White,
+                                    tint = OneUiWarning,
                                     modifier = Modifier.size(24.dp)
                                 )
                                 Spacer(modifier = Modifier.width(10.dp))
@@ -184,7 +191,155 @@ fun GoalsRewardsScreen(
                 onTriggerStreakBlast = { onTriggerCelebrationBlast?.invoke(BlastType.STREAK_GOAL) }
             )
 
-            // 2. Interactive Milestone & Streak Particle Blast Section
+            // 2. Timezone-Safe Streak Freeze Shield Protection Card
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(22.dp)),
+                color = DarkSurfaceElevated,
+                border = BorderStroke(1.dp, OneUiSecondary.copy(alpha = 0.45f))
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(18.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(44.dp)
+                                .clip(CircleShape)
+                                .background(OneUiSecondary.copy(alpha = 0.16f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Shield,
+                                contentDescription = "Streak Freeze Shield",
+                                tint = OneUiSecondary,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text(
+                                text = "Streak Freeze Shields: ${userStats.streakFreezeCount} Active",
+                                fontSize = 14.5.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = TextPrimary
+                            )
+                            Text(
+                                text = "Protects your ${userStats.displayStreakDays}-day streak across 1 missed local day (${toLocalIsoDate(System.currentTimeMillis())})",
+                                fontSize = 11.5.sp,
+                                color = TextSecondary,
+                                lineHeight = 16.sp
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Button(
+                        onClick = { onBuyStreakFreeze?.invoke() },
+                        enabled = userStats.availablePoints >= 100,
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = OneUiSecondary,
+                            contentColor = Color.Black,
+                            disabledContainerColor = DarkSurface,
+                            disabledContentColor = TextTertiary
+                        ),
+                        modifier = Modifier.testTag("buy_streak_freeze_button")
+                    ) {
+                        Text(text = "+1 Shield (100p)", fontSize = 11.5.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+
+            // 3. 30-Day GitHub-Style Activity Heatmap
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(22.dp))
+                    .testTag("thirty_day_activity_heatmap"),
+                color = DarkSurface,
+                border = BorderStroke(1.dp, DarkBorder)
+            ) {
+                val heatmapDays = remember(tasks, focusSessions, userStats) {
+                    val now = System.currentTimeMillis()
+                    val dayMs = 24 * 60 * 60 * 1000L
+                    (29 downTo 0).map { daysAgo ->
+                        val dayEpoch = now - daysAgo * dayMs
+                        val isoKey = toLocalIsoDate(dayEpoch)
+                        val completedOnDay = tasks.count {
+                            it.isCompleted && toLocalIsoDate(it.lastModified) == isoKey
+                        }
+                        val focusOnDay = focusSessions.count {
+                            toLocalIsoDate(it.completedAt) == isoKey
+                        }
+                        val score = completedOnDay + focusOnDay +
+                                if (daysAgo == 0 && userStats.tasksCompletedCount > 0) 1 else 0
+                        isoKey to score
+                    }
+                }
+
+                Column(modifier = Modifier.padding(18.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                text = "30-Day Productivity Heatmap",
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = TextPrimary
+                            )
+                            Text(
+                                text = "Local YYYY-MM-DD completions & Deep Work sessions",
+                                fontSize = 12.sp,
+                                color = TextSecondary
+                            )
+                        }
+                        Text(
+                            text = "${userStats.tasksCompletedCount} total",
+                            fontSize = 12.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = OneUiSuccess
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                        maxItemsInEachRow = 10
+                    ) {
+                        heatmapDays.forEach { (_, count) ->
+                            val cellColor = when {
+                                count >= 3 -> OneUiSuccess
+                                count == 2 -> OneUiSecondary
+                                count == 1 -> OneUiPrimary
+                                else -> DarkSurfaceElevated
+                            }
+                            Box(
+                                modifier = Modifier
+                                    .size(22.dp)
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(cellColor)
+                                    .border(1.dp, DarkBorder, RoundedCornerShape(6.dp))
+                            )
+                        }
+                    }
+                }
+            }
+
+            // 4. Interactive Milestone & Streak Particle Blast Section
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -209,14 +364,14 @@ fun GoalsRewardsScreen(
                                 modifier = Modifier
                                     .size(36.dp)
                                     .clip(CircleShape)
-                                    .background(Color(0xFF222222))
-                                    .border(1.dp, Color.White, CircleShape),
+                                    .background(OneUiPrimary.copy(alpha = 0.2f))
+                                    .border(1.dp, OneUiPrimaryLight, CircleShape),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Stars,
                                     contentDescription = null,
-                                    tint = Color.White,
+                                    tint = OneUiPrimaryLight,
                                     modifier = Modifier.size(20.dp)
                                 )
                             }
@@ -250,16 +405,16 @@ fun GoalsRewardsScreen(
                                 .testTag("btn_trigger_streak_blast"),
                             shape = RoundedCornerShape(14.dp),
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFF222222),
-                                contentColor = Color.White
+                                containerColor = OneUiWarning.copy(alpha = 0.2f),
+                                contentColor = OneUiWarning
                             ),
-                            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF555555))
+                            border = BorderStroke(1.dp, OneUiWarning)
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(
                                     imageVector = Icons.Default.LocalFireDepartment,
                                     contentDescription = null,
-                                    tint = Color.White,
+                                    tint = OneUiWarning,
                                     modifier = Modifier.size(16.dp)
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
@@ -274,16 +429,16 @@ fun GoalsRewardsScreen(
                                 .testTag("btn_trigger_level_blast"),
                             shape = RoundedCornerShape(14.dp),
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFF191919),
-                                contentColor = Color.White
+                                containerColor = OneUiPrimary.copy(alpha = 0.22f),
+                                contentColor = OneUiPrimaryLight
                             ),
-                            border = androidx.compose.foundation.BorderStroke(1.dp, Color.White)
+                            border = BorderStroke(1.dp, OneUiPrimaryLight)
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(
                                     imageVector = Icons.Default.EmojiEvents,
                                     contentDescription = null,
-                                    tint = Color.White,
+                                    tint = OneUiPrimaryLight,
                                     modifier = Modifier.size(16.dp)
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
@@ -294,7 +449,7 @@ fun GoalsRewardsScreen(
                 }
             }
 
-            // 2. Active Goals Section
+            // 5. Active Goals Section
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -335,7 +490,7 @@ fun GoalsRewardsScreen(
                 }
             }
 
-            // 3. Rewards Store & Redemption Center
+            // 6. Rewards Store & Redemption Center
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -361,7 +516,7 @@ fun GoalsRewardsScreen(
                 }
 
                 Text(
-                    text = "Spend your completion points on real-life perks and treats:",
+                    text = "Spend your priority-scaled completion points on real-life perks and treats:",
                     fontSize = 13.sp,
                     color = TextSecondary
                 )
@@ -375,10 +530,10 @@ fun GoalsRewardsScreen(
                 }
             }
 
-            // 4. Milestone Badges Showcase
+            // 7. Milestone Badges Showcase (5 Unlockable Achievements)
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
-                    text = "Unlocked Achievements",
+                    text = "Unlocked Achievements Showcase",
                     fontSize = 17.sp,
                     fontWeight = FontWeight.Bold,
                     color = TextPrimary
@@ -389,19 +544,37 @@ fun GoalsRewardsScreen(
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     AchievementBadge(
-                        title = "First Victory",
-                        description = "1st task done",
+                        title = "First Sync",
+                        description = "2-way Google sync",
+                        isUnlocked = true,
+                        modifier = Modifier.weight(1f)
+                    )
+                    AchievementBadge(
+                        title = "7-Day Streak",
+                        description = "7+ day streak",
+                        isUnlocked = userStats.currentStreakDays >= 7 || userStats.bestStreakDays >= 7,
+                        modifier = Modifier.weight(1f)
+                    )
+                    AchievementBadge(
+                        title = "Deep Work Master",
+                        description = "Focus sprint done",
+                        isUnlocked = focusSessions.isNotEmpty() || userStats.totalXp >= 100,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    AchievementBadge(
+                        title = "Inbox Zero",
+                        description = "Complete tasks",
                         isUnlocked = userStats.tasksCompletedCount >= 1,
                         modifier = Modifier.weight(1f)
                     )
                     AchievementBadge(
-                        title = "Streak Pro",
-                        description = "3+ day streak",
-                        isUnlocked = userStats.currentStreakDays >= 3,
-                        modifier = Modifier.weight(1f)
-                    )
-                    AchievementBadge(
-                        title = "Task Master",
+                        title = "Calendar Architect",
                         description = "5+ tasks done",
                         isUnlocked = userStats.tasksCompletedCount >= 5,
                         modifier = Modifier.weight(1f)
@@ -438,7 +611,7 @@ private fun GoalCard(
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp)),
         color = DarkSurfaceElevated,
-        border = androidx.compose.foundation.BorderStroke(
+        border = BorderStroke(
             1.dp,
             if (goal.isCompleted) OneUiSuccess.copy(alpha = 0.5f) else DarkBorder
         )
@@ -524,7 +697,6 @@ private fun GoalCard(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Progress Bar & Count
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -572,7 +744,7 @@ private fun RewardCard(
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp)),
         color = DarkSurfaceElevated,
-        border = androidx.compose.foundation.BorderStroke(
+        border = BorderStroke(
             1.dp,
             if (reward.isRedeemed) OneUiSuccess.copy(alpha = 0.4f) else DarkBorder
         )
@@ -658,9 +830,9 @@ private fun RewardCard(
                     enabled = canAfford,
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.White,
-                        contentColor = Color.Black,
-                        disabledContainerColor = Color(0xFF1E1E1E),
+                        containerColor = OneUiPrimary,
+                        contentColor = Color.White,
+                        disabledContainerColor = DarkSurface,
                         disabledContentColor = TextTertiary
                     ),
                     modifier = Modifier.testTag("redeem_button_${reward.id}")
@@ -683,9 +855,9 @@ private fun AchievementBadge(
         modifier = modifier
             .clip(RoundedCornerShape(16.dp)),
         color = if (isUnlocked) DarkSurfaceElevated else DarkSurface,
-        border = androidx.compose.foundation.BorderStroke(
+        border = BorderStroke(
             1.dp,
-            if (isUnlocked) OneUiPrimary.copy(alpha = 0.4f) else DarkBorder
+            if (isUnlocked) OneUiPrimary.copy(alpha = 0.45f) else DarkBorder
         )
     ) {
         Column(
@@ -705,7 +877,7 @@ private fun AchievementBadge(
                 Icon(
                     imageVector = if (isUnlocked) Icons.Default.Stars else Icons.Default.Lock,
                     contentDescription = null,
-                    tint = if (isUnlocked) OneUiPrimary else TextTertiary,
+                    tint = if (isUnlocked) OneUiPrimaryLight else TextTertiary,
                     modifier = Modifier.size(20.dp)
                 )
             }

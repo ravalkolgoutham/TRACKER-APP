@@ -1,53 +1,82 @@
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
     android:width="200dp"
     android:height="160dp"
     android:viewportWidth="200"
     android:viewportHeight="160">
 
-    <!-- Atmospheric radial glow circle -->
+    <!-- Atmospheric Aero Cyan & Cobalt radial glow circles -->
     <path
-        android:fillColor="#141414"
-        android:pathData="M 100,80 m -65,0 a 65,65 0 1,0 130,0 a 65,65 0 1,0 -130,0" />
+        android:fillColor="#2434C8E8"
+        android:pathData="M 100,80 m -66,0 a 66,66 0 1,0 132,0 a 66,66 0 1,0 -132,0" />
+    <path
+        android:fillColor="#224B4CED"
+        android:pathData="M 100,80 m -48,0 a 48,48 0 1,0 96,0 a 48,48 0 1,0 -96,0" />
 
-    <!-- Clipboard base -->
+    <!-- Frosted Glass Clipboard base -->
     <path
-        android:fillColor="#0D0D0D"
-        android:strokeColor="#333333"
-        android:strokeWidth="1.5"
+        android:fillColor="#FF1E293B"
+        android:strokeColor="#FF34C8E8"
+        android:strokeWidth="1.8"
         android:pathData="M 60,35 h 80 c 6,0 10,4 10,10 v 90 c 0,6 -4,10 -10,10 h -80 c -6,0 -10,-4 -10,-10 v -90 c 0,-6 4,-10 10,-10 Z" />
-
-    <!-- Top clip holder -->
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M 82,26 h 36 c 3,0 5,2 5,5 v 14 h -46 v -14 c 0,-3 2,-5 5,-5 Z" />
 
     <!-- Sheet paper interior -->
     <path
-        android:fillColor="#1A1A1A"
+        android:fillColor="#FF26354D"
         android:pathData="M 64,48 h 72 v 82 h -72 Z" />
 
-    <!-- Big luminous celebration checkmark -->
+    <!-- Top clip holder (Royal Cobalt to Cyan) -->
     <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M 100,88 m -22,0 a 22,22 0 1,0 44,0 a 22,22 0 1,0 -44,0" />
+        android:pathData="M 82,26 h 36 c 3,0 5,2 5,5 v 14 h -46 v -14 c 0,-3 2,-5 5,-5 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="77"
+                android:startY="26"
+                android:endX="123"
+                android:endY="45"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#FF4B4CED" />
+                <item android:offset="1.0" android:color="#FF34C8E8" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Big luminous celebration checkmark badge -->
+    <path
+        android:fillColor="#3310B981"
+        android:pathData="M 100,88 m -27,0 a 27,27 0 1,0 54,0 a 27,27 0 1,0 -54,0" />
+    <path
+        android:pathData="M 100,88 m -21,0 a 21,21 0 1,0 42,0 a 21,21 0 1,0 -42,0">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="79"
+                android:startY="67"
+                android:endX="121"
+                android:endY="109"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#FF34C8E8" />
+                <item android:offset="1.0" android:color="#FF10B981" />
+            </gradient>
+        </aapt:attr>
+    </path>
     <path
         android:fillColor="#00000000"
-        android:strokeColor="#000000"
-        android:strokeWidth="4.5"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="4.2"
         android:strokeLineCap="round"
         android:strokeLineJoin="round"
         android:pathData="M 90,88 L 97,95 L 111,79" />
 
-    <!-- Floating confetti stars -->
+    <!-- Floating colorful confetti stars -->
     <path
-        android:fillColor="#CCCCCC"
+        android:fillColor="#FFFBBF24"
         android:pathData="M 38,55 L 40,61 L 46,63 L 40,65 L 38,71 L 36,65 L 30,63 L 36,61 Z" />
 
     <path
-        android:fillColor="#FFFFFF"
+        android:fillColor="#FF34C8E8"
         android:pathData="M 160,45 L 161.5,50 L 166,51.5 L 161.5,53 L 160,58 L 158.5,53 L 154,51.5 L 158.5,50 Z" />
 
     <path
-        android:fillColor="#888888"
+        android:fillColor="#FFA78BFA"
         android:pathData="M 165,115 L 166.5,118.5 L 170,120 L 166.5,121.5 L 165,125 L 163.5,121.5 L 160,120 L 163.5,118.5 Z" />
 </vector>

@@ -243,13 +243,13 @@ fun CreateGoalDialog(
                 enabled = title.isNotBlank(),
                 shape = RoundedCornerShape(16.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.White,
-                    contentColor = Color.Black,
-                    disabledContainerColor = Color(0xFF1E1E1E),
+                    containerColor = OneUiPrimary,
+                    contentColor = Color.White,
+                    disabledContainerColor = DarkSurfaceElevated,
                     disabledContentColor = TextTertiary
                 )
             ) {
-                Text(text = "Create Goal & Activate Reward", color = Color.Black, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                Text(text = "Create Goal & Activate Reward", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
             }
 
             Spacer(modifier = Modifier.height(28.dp))

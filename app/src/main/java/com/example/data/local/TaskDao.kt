@@ -26,7 +26,7 @@ interface TaskDao {
     @Query("SELECT * FROM tasks WHERE syncStatus IN ('PENDING_INSERT', 'PENDING_UPDATE', 'PENDING_DELETE')")
     suspend fun getPendingSyncTasks(): List<TaskEntity>
 
-    @Query("SELECT * FROM tasks WHERE isCompleted = 0 AND syncStatus != 'PENDING_DELETE' AND scheduledTime > :currentTime")
+    @Query("SELECT * FROM tasks WHERE isCompleted = 0 AND syncStatus != 'PENDING_DELETE' AND (scheduledTime > :currentTime OR (snoozeUntil IS NOT NULL AND snoozeUntil > :currentTime))")
     suspend fun getUpcomingIncompleteTasks(currentTime: Long): List<TaskEntity>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)

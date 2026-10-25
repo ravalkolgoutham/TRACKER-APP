@@ -71,15 +71,17 @@ fun UserProgressCard(
     val currentInLevel = (userStats.totalXp - userStats.xpForCurrentLevel).coerceAtLeast(0)
     val neededInLevel = (userStats.xpForNextLevel - userStats.xpForCurrentLevel).coerceAtLeast(1)
 
-    Surface(
+    val activePrimary = androidx.compose.material3.MaterialTheme.colorScheme.primary
+    val activeSecondary = androidx.compose.material3.MaterialTheme.colorScheme.secondary
+
+    Box(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(24.dp))
-            .border(1.dp, DarkBorder, RoundedCornerShape(24.dp))
+            .background(com.example.ui.theme.glassSurfaceBrush(1f))
+            .border(1.dp, com.example.ui.theme.glassSpecularBorderBrush(activePrimary), RoundedCornerShape(24.dp))
             .clickable { onNavigateToRewards() }
-            .testTag("user_progress_card"),
-        color = DarkSurface,
-        shape = RoundedCornerShape(24.dp)
+            .testTag("user_progress_card")
     ) {
         Column(
             modifier = Modifier
@@ -103,7 +105,7 @@ fun UserProgressCard(
                             .clip(CircleShape)
                             .background(
                                 Brush.linearGradient(
-                                    listOf(OneUiPrimary, OneUiSecondary)
+                                    listOf(activePrimary, activeSecondary)
                                 )
                             )
                             .padding(2.dp)
@@ -120,7 +122,7 @@ fun UserProgressCard(
                                     text = "LVL",
                                     fontSize = 9.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = OneUiSecondary,
+                                    color = activePrimary,
                                     letterSpacing = 0.5.sp
                                 )
                                 Text(
@@ -150,15 +152,15 @@ fun UserProgressCard(
                             Box(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(6.dp))
-                                    .background(OneUiPrimary.copy(alpha = 0.18f))
-                                    .border(1.dp, OneUiPrimary.copy(alpha = 0.4f), RoundedCornerShape(6.dp))
+                                    .background(activePrimary.copy(alpha = 0.18f))
+                                    .border(1.dp, activePrimary.copy(alpha = 0.45f), RoundedCornerShape(6.dp))
                                     .padding(horizontal = 6.dp, vertical = 2.dp)
                             ) {
                                 Text(
                                     text = "Rank ${userStats.currentLevel}",
                                     fontSize = 10.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = OneUiPrimaryLight
+                                    color = activePrimary
                                 )
                             }
                         }
@@ -230,8 +232,8 @@ fun UserProgressCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(16.dp))
-                    .background(DarkSurfaceElevated)
-                    .border(1.dp, DarkBorderSubtle, RoundedCornerShape(16.dp))
+                    .background(DarkSurfaceElevated.copy(alpha = 0.78f))
+                    .border(1.dp, activePrimary.copy(alpha = 0.25f), RoundedCornerShape(16.dp))
                     .padding(14.dp)
             ) {
                 Row(
@@ -243,7 +245,7 @@ fun UserProgressCard(
                         Icon(
                             imageVector = Icons.Default.TrendingUp,
                             contentDescription = null,
-                            tint = Color.White,
+                            tint = activePrimary,
                             modifier = Modifier.size(14.dp)
                         )
                         Spacer(modifier = Modifier.width(6.dp))
@@ -259,7 +261,7 @@ fun UserProgressCard(
                         text = "$currentInLevel / $neededInLevel XP",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
-                        color = OneUiSecondary
+                        color = activePrimary
                     )
                 }
 
@@ -282,8 +284,8 @@ fun UserProgressCard(
                             .background(
                                 Brush.horizontalGradient(
                                     listOf(
-                                        OneUiPrimary,
-                                        OneUiSecondary,
+                                        activeSecondary,
+                                        activePrimary,
                                         Color(0xFF818CF8)
                                     )
                                 )

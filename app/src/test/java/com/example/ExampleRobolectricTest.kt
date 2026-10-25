@@ -181,4 +181,59 @@ class ExampleRobolectricTest {
         )
         assertEquals(com.example.model.BlastType.LEVEL_UP, levelBlast.type)
     }
+
+    @Test
+    fun `query upcoming incomplete tasks restores snoozed tasks even when original scheduledTime is in the past`() = runBlocking {
+        val now = System.currentTimeMillis()
+        val pastScheduledButSnoozedFuture = TaskEntity(
+            id = "snoozed_1",
+            googleEventId = null,
+            title = "Snoozed Deep Work Sprint",
+            description = "Should be restored on boot",
+            scheduledTime = now - 600_000L, // 10m ago
+            endTime = now + 1_200_000L,
+            isCompleted = false,
+            priority = Priority.URGENT,
+            category = "Focus",
+            repeatRule = RepeatRule.NONE,
+            reminderMinutesBefore = 15,
+            syncStatus = SyncStatus.SYNCED,
+            lastModified = now,
+            version = 1,
+            snoozeUntil = now + 600_000L // 10m in future
+        )
+
+        db.taskDao().insert(pastScheduledButSnoozedFuture)
+
+        val tasksToRestore = db.taskDao().getUpcomingIncompleteTasks(now)
+        assertEquals(1, tasksToRestore.size)
+        assertEquals("Snoozed Deep Work Sprint", tasksToRestore[0].title)
+    }
+
+    @Test
+    fun `natural language parser extracts priority category and duration`() {
+        val parsed = com.example.ui.NaturalLanguageTaskParser.parse(
+            "Prepare Q4 Architecture Deck tomorrow 3pm #Work !urgent 45m"
+        )
+        assertEquals("Prepare Q4 Architecture Deck", parsed.cleanTitle)
+        assertEquals(Priority.URGENT, parsed.priority)
+        assertEquals("Work", parsed.category)
+        assertEquals(45, parsed.durationMinutes)
+        assertTrue(parsed.scheduledTime > System.currentTimeMillis())
+    }
+
+    @Test
+    fun `subtask serialization and domain conversion round-trip`() {
+        val subtasks = listOf(
+            com.example.model.SubtaskItem("s1", "Outline architecture", true),
+            com.example.model.SubtaskItem("s2", "Benchmark Room queries", false)
+        )
+        val encoded = TaskEntity.encodeSubtasks(subtasks)
+        val decoded = TaskEntity.parseSubtasks(encoded)
+        assertEquals(2, decoded.size)
+        assertEquals("Outline architecture", decoded[0].title)
+        assertEquals(true, decoded[0].isCompleted)
+        assertEquals("Benchmark Room queries", decoded[1].title)
+        assertEquals(false, decoded[1].isCompleted)
+    }
 }

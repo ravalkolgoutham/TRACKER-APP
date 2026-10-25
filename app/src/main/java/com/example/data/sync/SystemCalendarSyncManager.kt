@@ -16,14 +16,15 @@ import com.example.model.Priority
 import com.example.model.RepeatRule
 import com.example.model.SyncStatus
 import com.example.model.TaskItem
+import java.util.Calendar
+import java.util.Locale
+import java.util.TimeZone
+import java.util.UUID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.util.Calendar
-import java.util.TimeZone
-import java.util.UUID
 
 private const val TAG = "CalendarSyncManager"
 
@@ -34,7 +35,8 @@ data class CalendarAccountInfo(
     val accountType: String,
     val isSamsung: Boolean,
     val isGoogle: Boolean,
-    val isPrimary: Boolean
+    val isPrimary: Boolean,
+    val isWritable: Boolean
 )
 
 class SystemCalendarSyncManager(private val context: Context) {
@@ -56,10 +58,6 @@ class SystemCalendarSyncManager(private val context: Context) {
         return readGranted && writeGranted
     }
 
-    /**
-     * Start observing CalendarContract.Events in real-time.
-     * Triggers automatically whenever Samsung Calendar or Google Calendar alters events.
-     */
     fun startRealtimeObserver(onCalendarChanged: () -> Unit) {
         if (!hasCalendarPermissions()) {
             Log.d(TAG, "Cannot start calendar observer: permissions not granted")
@@ -74,7 +72,7 @@ class SystemCalendarSyncManager(private val context: Context) {
                 Log.d(TAG, "Real-time calendar change detected on $uri")
                 debounceJob?.cancel()
                 debounceJob = scope.launch {
-                    delay(800) // Debounce rapid consecutive modifications
+                    delay(1200)
                     onCalendarChanged()
                 }
             }
@@ -104,7 +102,8 @@ class SystemCalendarSyncManager(private val context: Context) {
     }
 
     /**
-     * Finds active Samsung & Google Calendars on device.
+     * Finds active user-writable Samsung & Google Calendars on device,
+     * excluding read-only Holiday, Observance, Birthday, and Contact calendars.
      */
     fun getAvailableCalendars(): List<CalendarAccountInfo> {
         if (!hasCalendarPermissions()) return emptyList()
@@ -115,7 +114,8 @@ class SystemCalendarSyncManager(private val context: Context) {
             CalendarContract.Calendars.CALENDAR_DISPLAY_NAME,
             CalendarContract.Calendars.ACCOUNT_NAME,
             CalendarContract.Calendars.ACCOUNT_TYPE,
-            CalendarContract.Calendars.IS_PRIMARY
+            CalendarContract.Calendars.IS_PRIMARY,
+            CalendarContract.Calendars.CALENDAR_ACCESS_LEVEL
         )
 
         try {
@@ -131,6 +131,7 @@ class SystemCalendarSyncManager(private val context: Context) {
                 val accNameIdx = cursor.getColumnIndex(CalendarContract.Calendars.ACCOUNT_NAME)
                 val accTypeIdx = cursor.getColumnIndex(CalendarContract.Calendars.ACCOUNT_TYPE)
                 val primaryIdx = cursor.getColumnIndex(CalendarContract.Calendars.IS_PRIMARY)
+                val accessIdx = cursor.getColumnIndex(CalendarContract.Calendars.CALENDAR_ACCESS_LEVEL)
 
                 while (cursor.moveToNext()) {
                     val id = cursor.getLong(idIdx)
@@ -138,7 +139,23 @@ class SystemCalendarSyncManager(private val context: Context) {
                     val accName = cursor.getString(accNameIdx) ?: ""
                     val accType = cursor.getString(accTypeIdx) ?: ""
                     val isPrimary = if (primaryIdx != -1) cursor.getInt(primaryIdx) == 1 else false
+                    val accessLevel = if (accessIdx != -1) cursor.getInt(accessIdx) else 0
 
+                    val lowerName = name.lowercase(Locale.getDefault())
+                    val lowerAcc = accName.lowercase(Locale.getDefault())
+                    val isHolidayOrSystemFeed = lowerName.contains("holiday") ||
+                            lowerName.contains("observance") ||
+                            lowerName.contains("birthday") ||
+                            lowerName.contains("contact") ||
+                            lowerAcc.contains("holiday") ||
+                            lowerAcc.contains("#contacts") ||
+                            lowerAcc.contains("group.v.calendar.google.com")
+
+                    if (isHolidayOrSystemFeed) {
+                        continue
+                    }
+
+                    val isWritable = accessLevel >= CalendarContract.Calendars.CAL_ACCESS_CONTRIBUTOR
                     val isSamsung = accType.contains("sec", ignoreCase = true) ||
                             accType.contains("samsung", ignoreCase = true) ||
                             accName.contains("samsung", ignoreCase = true)
@@ -152,7 +169,8 @@ class SystemCalendarSyncManager(private val context: Context) {
                             accountType = accType,
                             isSamsung = isSamsung,
                             isGoogle = isGoogle,
-                            isPrimary = isPrimary
+                            isPrimary = isPrimary,
+                            isWritable = isWritable
                         )
                     )
                 }
@@ -163,11 +181,8 @@ class SystemCalendarSyncManager(private val context: Context) {
         return list
     }
 
-    /**
-     * Resolves the best primary writable calendar ID (Samsung or Google).
-     */
     private fun getPrimaryCalendarId(): Long? {
-        val calendars = getAvailableCalendars()
+        val calendars = getAvailableCalendars().filter { it.isWritable }
         if (calendars.isEmpty()) return null
         return calendars.firstOrNull { it.isPrimary }?.id
             ?: calendars.firstOrNull { it.isGoogle }?.id
@@ -176,12 +191,36 @@ class SystemCalendarSyncManager(private val context: Context) {
     }
 
     /**
-     * Reads events across device calendars (Samsung & Google) for synchronization into Room.
+     * Helper to identify Holiday / Observance / auto-generated system calendar events
+     * so they never pollute the user's personal task list.
      */
-    fun readEventsFromCalendar(daysPast: Int = 30, daysFuture: Int = 90): List<TaskItem> {
+    fun isHolidayOrObservanceEvent(title: String, description: String): Boolean {
+        val lowerDesc = description.lowercase(Locale.getDefault())
+        val lowerTitle = title.lowercase(Locale.getDefault())
+        return lowerDesc.contains("to hide observances") ||
+                lowerDesc.contains("observance") ||
+                lowerDesc.contains("public holiday") ||
+                lowerDesc.contains("regional holiday") ||
+                lowerDesc.contains("government holiday") ||
+                lowerTitle.contains("jayanti") && lowerDesc.contains("google calendar")
+    }
+
+    /**
+     * Reads user events from primary writable calendars only, excluding all
+     * Holiday/Observance feeds and deduplicating by (title, scheduledTime).
+     */
+    fun readEventsFromCalendar(daysPast: Int = 7, daysFuture: Int = 30): List<TaskItem> {
         if (!hasCalendarPermissions()) return emptyList()
 
+        val writableCalendarIds = getAvailableCalendars()
+            .filter { it.isWritable }
+            .map { it.id }
+            .toSet()
+        if (writableCalendarIds.isEmpty()) return emptyList()
+
         val results = mutableListOf<TaskItem>()
+        val seenKeys = mutableSetOf<String>()
+
         val cal = Calendar.getInstance()
         cal.add(Calendar.DAY_OF_YEAR, -daysPast)
         val startMillis = cal.timeInMillis
@@ -190,11 +229,12 @@ class SystemCalendarSyncManager(private val context: Context) {
 
         val projection = arrayOf(
             CalendarContract.Events._ID,
+            CalendarContract.Events.CALENDAR_ID,
             CalendarContract.Events.TITLE,
             CalendarContract.Events.DESCRIPTION,
             CalendarContract.Events.DTSTART,
             CalendarContract.Events.DTEND,
-            CalendarContract.Events.STATUS
+            CalendarContract.Events.ALL_DAY
         )
 
         val selection = "(${CalendarContract.Events.DTSTART} >= ?) AND (${CalendarContract.Events.DTSTART} <= ?) AND (${CalendarContract.Events.DELETED} != 1)"
@@ -209,15 +249,28 @@ class SystemCalendarSyncManager(private val context: Context) {
                 "${CalendarContract.Events.DTSTART} ASC"
             )?.use { cursor ->
                 val idIdx = cursor.getColumnIndex(CalendarContract.Events._ID)
+                val calIdIdx = cursor.getColumnIndex(CalendarContract.Events.CALENDAR_ID)
                 val titleIdx = cursor.getColumnIndex(CalendarContract.Events.TITLE)
                 val descIdx = cursor.getColumnIndex(CalendarContract.Events.DESCRIPTION)
                 val startIdx = cursor.getColumnIndex(CalendarContract.Events.DTSTART)
                 val endIdx = cursor.getColumnIndex(CalendarContract.Events.DTEND)
+                val allDayIdx = cursor.getColumnIndex(CalendarContract.Events.ALL_DAY)
 
                 while (cursor.moveToNext()) {
+                    val calId = if (calIdIdx != -1) cursor.getLong(calIdIdx) else -1L
+                    if (calId !in writableCalendarIds) continue
+
                     val rawId = cursor.getLong(idIdx)
-                    val rawTitle = cursor.getString(titleIdx) ?: "Untitled Event"
+                    val rawTitle = cursor.getString(titleIdx)?.trim() ?: continue
+                    if (rawTitle.isBlank()) continue
+
                     val desc = cursor.getString(descIdx) ?: ""
+                    val isAllDay = if (allDayIdx != -1) cursor.getInt(allDayIdx) == 1 else false
+
+                    // Skip Holiday / Observance events or all-day public holidays not created by SyncTask
+                    if (isHolidayOrObservanceEvent(rawTitle, desc)) continue
+                    if (isAllDay && !desc.contains("[Category:")) continue
+
                     val start = cursor.getLong(startIdx)
                     val end = if (endIdx != -1 && !cursor.isNull(endIdx)) {
                         cursor.getLong(endIdx)
@@ -227,6 +280,10 @@ class SystemCalendarSyncManager(private val context: Context) {
 
                     val isDone = rawTitle.startsWith("✓ ") || desc.contains("[Status: Completed]")
                     val cleanTitle = rawTitle.removePrefix("✓ ").trim()
+
+                    // Deduplicate by normalized title + start time
+                    val dedupKey = "${cleanTitle.lowercase(Locale.getDefault())}_$start"
+                    if (!seenKeys.add(dedupKey)) continue
 
                     results.add(
                         TaskItem(
@@ -253,9 +310,6 @@ class SystemCalendarSyncManager(private val context: Context) {
         return results
     }
 
-    /**
-     * Push a task created or modified in the app to Samsung/Google calendar.
-     */
     fun pushTaskToDeviceCalendar(task: TaskItem): String? {
         if (!hasCalendarPermissions()) return null
         val calendarId = getPrimaryCalendarId() ?: return null
@@ -273,7 +327,6 @@ class SystemCalendarSyncManager(private val context: Context) {
         try {
             val eventIdNum = task.googleEventId?.removePrefix("cal_")?.toLongOrNull()
             if (eventIdNum != null) {
-                // Update existing
                 val uri = ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, eventIdNum)
                 val updatedRows = contentResolver.update(uri, values, null, null)
                 if (updatedRows > 0) {
@@ -281,11 +334,9 @@ class SystemCalendarSyncManager(private val context: Context) {
                 }
             }
 
-            // Insert new event
             val uri = contentResolver.insert(CalendarContract.Events.CONTENT_URI, values)
             val newId = uri?.lastPathSegment
             if (newId != null) {
-                // Add default 15-minute reminder in calendar
                 addCalendarReminder(newId.toLong(), task.reminderMinutesBefore)
                 return "cal_$newId"
             }

@@ -13,6 +13,9 @@ interface RewardDao {
     @Query("SELECT * FROM rewards ORDER BY isRedeemed ASC, costPoints ASC")
     fun getAllRewardsFlow(): Flow<List<RewardEntity>>
 
+    @Query("SELECT * FROM rewards")
+    suspend fun getAllRewardsList(): List<RewardEntity>
+
     @Query("SELECT * FROM rewards WHERE id = :id LIMIT 1")
     suspend fun getRewardById(id: String): RewardEntity?
 

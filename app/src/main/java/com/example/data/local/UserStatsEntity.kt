@@ -13,7 +13,8 @@ data class UserStatsEntity(
     val currentStreakDays: Int,
     val bestStreakDays: Int = 1,
     val lastCompletedDate: Long,
-    val tasksCompletedCount: Int
+    val tasksCompletedCount: Int,
+    val streakFreezeCount: Int = 1
 ) {
     fun toDomain(): UserRewardStats = UserRewardStats(
         id = id,
@@ -23,7 +24,8 @@ data class UserStatsEntity(
         currentStreakDays = currentStreakDays,
         bestStreakDays = bestStreakDays,
         lastCompletedDate = lastCompletedDate,
-        tasksCompletedCount = tasksCompletedCount
+        tasksCompletedCount = tasksCompletedCount,
+        streakFreezeCount = streakFreezeCount
     )
 
     companion object {
@@ -35,7 +37,8 @@ data class UserStatsEntity(
             currentStreakDays = stats.currentStreakDays,
             bestStreakDays = stats.bestStreakDays,
             lastCompletedDate = stats.lastCompletedDate,
-            tasksCompletedCount = stats.tasksCompletedCount
+            tasksCompletedCount = stats.tasksCompletedCount,
+            streakFreezeCount = stats.streakFreezeCount
         )
     }
 }

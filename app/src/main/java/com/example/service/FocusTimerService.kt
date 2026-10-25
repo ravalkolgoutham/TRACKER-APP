@@ -143,6 +143,17 @@ class FocusTimerService : Service() {
         val durationMins = _totalSeconds.value / 60
         val tag = _currentTag.value
 
+        // Show completion notification
+        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val completionNotification = NotificationCompat.Builder(this, SyncTaskApp.CHANNEL_FOCUS_ID)
+            .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
+            .setContentTitle("🎉 Focus Session Completed!")
+            .setContentText("Great work! You finished $durationMins mins of '$taskTitle'.")
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+            .build()
+        notificationManager.notify(NOTIFICATION_ID + 1, completionNotification)
+
         serviceScope.launch(Dispatchers.IO) {
             try {
                 val db = AppDatabase.getDatabase(applicationContext)
@@ -156,24 +167,20 @@ class FocusTimerService : Service() {
                         tag = tag
                     )
                 )
+                if (tag == "Deep Work") {
+                    (applicationContext as? SyncTaskApp)?.repository?.recordCompletedFocusPomodoro(taskId, durationMins)
+                }
+                runCatching {
+                    val toneGen = android.media.ToneGenerator(android.media.AudioManager.STREAM_NOTIFICATION, 85)
+                    toneGen.startTone(android.media.ToneGenerator.TONE_PROP_ACK, 400)
+                }
             } catch (e: Exception) {
                 Log.e(TAG, "Error saving focus session: ${e.message}")
+            } finally {
+                stopForeground(STOP_FOREGROUND_REMOVE)
+                stopSelf()
             }
         }
-
-        // Show completion notification
-        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        val completionNotification = NotificationCompat.Builder(this, SyncTaskApp.CHANNEL_FOCUS_ID)
-            .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
-            .setContentTitle("🎉 Focus Session Completed!")
-            .setContentText("Great work! You finished $durationMins mins of '$taskTitle'.")
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setAutoCancel(true)
-            .build()
-        notificationManager.notify(NOTIFICATION_ID + 1, completionNotification)
-
-        stopForeground(STOP_FOREGROUND_REMOVE)
-        stopSelf()
     }
 
     private fun buildNotification(): android.app.Notification {
